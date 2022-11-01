@@ -22,4 +22,5 @@ void navFromCoords();
 task main()
 {
 	motor[motorA] = motor[motorD] = 50;
+	wait1Msc(5000000000);
 }
