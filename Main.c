@@ -21,5 +21,5 @@ void navFromCoords();
 
 task main()
 {
-
+	motor[motorA] = motor[motorD] = 50;
 }
