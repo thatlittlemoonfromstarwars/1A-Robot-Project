@@ -1,0 +1,7 @@
+void configureSensors();
+task main()
+{
+
+
+
+}
