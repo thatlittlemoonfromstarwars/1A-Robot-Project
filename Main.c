@@ -25,10 +25,10 @@ void calcPath(); // Andor
 
 task main()
 {
-	const int MAX_DOMINO_LOAD = 60;
+	const int DOMINOS_AT_MAX_LOAD = 60;
 
 	configureAllSensors();
-	int dominoCount = MAX_DOMINO_LOAD;
+	int dominoCount = DOMINOS_AT_MAX_LOAD;
 }
 
 void configureAllSensors()
