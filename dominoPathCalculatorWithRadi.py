@@ -112,7 +112,7 @@ def main():
     DISPLAY = pygame.display.set_mode((700,500),0,32)
 
     WHITE = (255,255,255)
-    BLACK = (0,0,0)
+    BLUE = (0,0,255)
     prev_point = Point(0,0)
     line_count = -1
     ANGLE_TOLERANCE = 20
@@ -178,7 +178,7 @@ def main():
                     
                 if legal_line:
                     if line_count != -1:
-                        pygame.draw.aaline(DISPLAY, BLACK, (prev_point.x, prev_point.y), (new_point.x, new_point.y))
+                        pygame.draw.aaline(DISPLAY, BLUE, (prev_point.x, prev_point.y), (new_point.x, new_point.y))
                         pygame.display.flip()
                     coords.append(Point(new_point.x, new_point.y))
                     prev_point = Point(new_point.x, new_point.y)
