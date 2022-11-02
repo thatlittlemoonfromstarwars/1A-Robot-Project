@@ -15,6 +15,7 @@ Sensor Ports:
 3 - color
 4 - ultrasonic
 */
+
 void configureAllSensors();
 void dispenseDomino();
 void followLine(); // Sean
