@@ -22,6 +22,9 @@ void followLine(); // Sean
 void followPathFromFile(); // Andor
 void driveToStartLocation(); // Andor
 void calcPath(); // Andor
+int calcAngle(int x1, int x2, int y1, int y2);
+int calcModulus(int x1, int x2);
+int calcLength(int x1, int x2, int y1, int y2);
 
 task main()
 {
@@ -48,4 +51,3 @@ void configureAllSensors()
 	wait1Msec(50);
 
 }
-
