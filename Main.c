@@ -22,8 +22,8 @@ void followLine(); // Sean
 void followPathFromFile(); // Andor
 void driveToStartLocation(); // Andor
 void calcPath(); // Andor
+float calcModulus(int x1, int x2);
 int calcAngle(int x1, int x2, int y1, int y2);
-int calcModulus(int x1, int x2);
 int calcLength(int x1, int x2, int y1, int y2);
 
 task main()
@@ -49,5 +49,14 @@ void configureAllSensors()
 	wait1Msec(100);
 	SensorMode[S2] = modeEV3Gyro_RateAndAngle;
 	wait1Msec(50);
+}
 
+float calcModulus(int x1, int x2)
+{
+	return sqrt(pow(x1,2) + pow(x2,2));
+}
+
+int calcAngle(int x1, int x2, int y1, int y2)
+{
+	return acos((x1*y1 + x2*y2)/(calcModulus(x1,x2)*calcModulus(y1,y2)));
 }
