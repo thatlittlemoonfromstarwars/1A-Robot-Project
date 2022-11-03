@@ -30,7 +30,8 @@ void followLine(); // Sean
 
 void stopAndKnock(); // Josh??
 
-void objectInTheWay(); // stops informs the user to move the object in the way
+void objectInTheWay(); // stops and informs the user to move the object in the way
+
 void followPathFromFile(); // Andor
 void driveToStartLocation(); // Andor
 void calcPath(); // Andor
