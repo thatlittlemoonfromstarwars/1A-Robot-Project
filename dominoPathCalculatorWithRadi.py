@@ -48,8 +48,7 @@ def orientation(p, q, r):
 		# Collinear orientation
 		return 0
 
-# The main function that returns true if
-# the line segment 'p1q1' and 'p2q2' intersect.
+# returns true if the line segment 'p1q1' and 'p2q2' intersect.
 def doIntersect(p1,q1,p2,q2):
 	
 	# Find the 4 orientations required for
@@ -152,6 +151,7 @@ def main():
                 # check for double click
                 if(new_point.x == prev_point.x and new_point.y == prev_point.y):
                     continue
+
                 legal_line = True
 
                 # new line

@@ -1,7 +1,11 @@
 /*
 Domino layer path follower
+Sean Atiken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 
 v1.0
+
+Assumptions:
+
 
 Motor Ports:
 A - left drive wheel
@@ -14,6 +18,8 @@ Sensor Ports:
 2 - gyro
 3 - color
 4 - ultrasonic
+
+
 */
 
 void configureAllSensors();
@@ -59,4 +65,10 @@ float calcModulus(int x1, int x2)
 int calcAngle(int x1, int x2, int y1, int y2)
 {
 	return acos((x1*y1 + x2*y2)/(calcModulus(x1,x2)*calcModulus(y1,y2)));
+}
+
+void followPathFromFile()
+{
+	// assumes robot starts on top left of domino placement area, facing right
+
 }
