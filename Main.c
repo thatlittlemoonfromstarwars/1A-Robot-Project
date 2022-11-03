@@ -14,9 +14,9 @@ C - gate motor
 D - right drive wheel
 
 Sensor Ports:
-1 - touch
+1 - color
 2 - gyro
-3 - color
+3 - touch
 4 - ultrasonic
 
 
@@ -47,16 +47,16 @@ task main()
 
 void configureAllSensors()
 {
-	SensorType[S1] = sensorEV3_Touch;
+	SensorType[S3] = sensorEV3_Touch;
 	SensorType[S2] = sensorEV3_Gyro;
 	wait1Msec(50);
-	SensorType[S3] = sensorEV3_Color;
+	SensorType[S1] = sensorEV3_Color;
 	wait1Msec(50);
 	SensorType[S4] = sensorEV3_Ultrasonic;
 	wait1Msec(50);
 	SensorMode[S2] = modeEV3Gyro_Calibration;
 	wait1Msec(50);
-	SensorMode[S3] = modeEV3Color_Color;
+	SensorMode[S1] = modeEV3Color_Color;
 	wait1Msec(100);
 	SensorMode[S2] = modeEV3Gyro_RateAndAngle;
 	wait1Msec(50);
