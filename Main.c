@@ -1,6 +1,6 @@
 /*
 Domino layer path follower
-Sean Atiken, Henrique Engelke, Josh Morcombe, and Andor Siegers
+Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 
 v1.0
 
@@ -23,8 +23,13 @@ Sensor Ports:
 */
 
 void configureAllSensors();
-void dispenseDomino();
+
+void dispenseDomino(); // Henrique
+
 void followLine(); // Sean
+
+void stopAndKnock(); // Josh??
+
 void followPathFromFile(); // Andor
 void driveToStartLocation(); // Andor
 void calcPath(); // Andor
