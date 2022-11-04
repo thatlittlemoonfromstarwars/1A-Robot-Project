@@ -29,7 +29,7 @@ void dropDomino(int &dropIndex, int &dominoCount); // Henrique
 void openDoor();
 void closeDoor();
 
-void stopAndKnock(); // Josh
+void stopAndKnock(int motor_power, int enc_limit); // Josh
 void somethingInTheWay(); // stops and informs the user to move the object in the way
 
 void driveDist(int mot_pow, float dist);
@@ -57,7 +57,7 @@ const int DOOR_SIZE = 170; // degrees
 const int DOOR_SPEED = 75;
 const int TOUCH_PORT = S3;
 const int GYRO_PORT = S2;
-const int COLOR_PORt = S1;
+const int COLOR_PORT = S1;
 const int ULTRASONIC_PORT = S4;
 
 task main()
@@ -67,7 +67,7 @@ task main()
 	nMotorEncoder(motorB)=0;
   int dropIndex = 0;
   int dominoCount = DOMINOS_AT_MAX_LOAD;
-  bool mode = 0; // 0 for line follow, 1 for file path
+  bool mode = false; // false for line follow, true for file path
   selectMode(mode);
   if(mode)
   {
@@ -117,11 +117,11 @@ void selectMode(bool &mode)
 
 	if(getButtonPress(buttonLeft))
 	{
-		mode = 0;
+		mode = false;
 	}
 	else if(getButtonPress(buttonRight))
 	{
-		mode = 1;
+		mode = true;
 	}
 
 }
@@ -140,7 +140,7 @@ void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoC
 	nMotorEncoder[motorD] = 0;
 	while(nMotorEncoder[motorD] < distToDeg(dist))
 	{
-		if(dominoCount = 0)
+		if(dominoCount == 0)
 		{
 			//TODO
 		}
@@ -185,7 +185,7 @@ void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in 
 //Stops motors, displays message and plays a sound. continues when object is moved.
 void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 {
-	while(sensorValue[ULTRASONIC_PORT] < max_dist)
+	while(SensorValue[ULTRASONIC_PORT] < max_dist)
 	{
 		motor[motorA] = motor[motorD] = 0;
 		// TODO find function to clear display
@@ -205,6 +205,11 @@ float calcModulus(int x1, int x2)
 int calcAngle(int x1, int x2, int y1, int y2)
 {
 	return acos((x1*y1 + x2*y2)/(calcModulus(x1,x2)*calcModulus(y1,y2)));
+}
+
+int calcLength(int x1, int x2, int y1, int y2)
+{
+	// TODO
 }
 
 void followPathFromFile()
@@ -252,33 +257,34 @@ void closeDoor()
 
 void dropDomino(int &dropIndex, int &dominoCount)
 {
-	if (dropIndex = 0)
+	if (dropIndex == 0)
 	{
-		motor[MotorB] = 15;
+		motor[motorB] = 15;
 		while (nMotorEncoder(motorB)<130)
 		{}
-		motor[MotorB] = 0;
+		motor[motorB] = 0;
 		dropIndex += 1;
 	}
-	if (dropIndex = 1)
+	if (dropIndex == 1)
 	{
-		motor[MotorB] = 15;
+		motor[motorB] = 15;
 		while (nMotorEncoder(motorB)<160)
 		{}
-		motor[MotorB]= 0;
+		motor[motorB]= 0;
 		dropIndex += 1;
 	}
 
-	if (dropIndex = 2)
+	if (dropIndex == 2)
 	{
-		motor[MotorB] = 15;
+		motor[motorB] = 15;
 		while (nMotorEncoder(motorB)<220)
 		{}
-		motor[MotorB] = 0;
+		motor[motorB] = 0;
 		wait1Msec(100);
-		motor[MotorB] = -15;
-		while (nMotorEncoder(motorB)<0);
-		motor[MotorB] = 0;
+		motor[motorB] = -15;
+		while (nMotorEncoder(motorB)<0)
+		{}
+		motor[motorB] = 0;
 	}
 	openDoor();
 	dominoCount--;
