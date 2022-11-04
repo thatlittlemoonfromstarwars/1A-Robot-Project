@@ -24,7 +24,9 @@ Sensor Ports:
 
 void configureAllSensors();
 
-void dispenseDomino(); // Henrique
+void dropDomino(); // Henrique
+void openDoor()
+void closeDoor()
 void stopAndKnock(); // Josh??
 void objectInTheWay(); // stops and informs the user to move the object in the way
 void driveDist(int mot_pow, float dist);
@@ -51,7 +53,9 @@ const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
 
 task main()
 {
-
+	nMotorEncoder(motorB)=0;
+  const int DOOR_SIZE=170;
+  int dropIndex = 0;
 	configureAllSensors();
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
 }
@@ -116,4 +120,61 @@ float degToDist(int deg)
 void setDriveTrainSpeed(int speed)
 {
 	motor[motorA] = motor[motorD] = speed;
+}
+
+//Henrique's functions
+void openDoor()
+{
+	nMotorEncoder(motorC)=0;
+	motor[motorC] = 75;
+	while (nMotorEncoder(motorC)<DOOR_SIZE)
+	{}
+	motor[motorC] = 0;
+
+	return;
+}
+void closeDoor()
+{
+	motor[motorC] = -75;
+	while (nMotorEncoder(motorC)>5)
+	{}
+	motor[motorC] = 0;
+
+	return;
+}
+void dropDomino()
+{
+	if (dropIndex = 0)
+	{
+			motor[MotorB] = 15;
+			while (nMotorEncoder(motorB)<130)
+			{}
+			motor[MotorB]=0;
+			dropIndex +=1;
+	}
+	if (dropIndex = 1)
+	{
+			motor[MotorB] = 15;
+			while (nMotorEncoder(motorB)<160)
+			{}
+			motor[MotorB]=0;
+			dropIndex +=1;
+	}
+
+	if (dropIndex = 2)
+	{
+			motor[MotorB] = 15;
+			while (nMotorEncoder(motorB)<220)
+			{}
+			motor[MotorB] = 0;
+			wait1Msec(100)
+			motor[MotorB] = -15;
+			while (nMotorEncoder(motorB)<0)
+			motor[MotorB] = 0;
+	}
+	openDoor()
+	driveDist(3.6)
+	closeDoor()
+
+	return;
 }
