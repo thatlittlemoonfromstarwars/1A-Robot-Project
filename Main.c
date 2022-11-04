@@ -140,6 +140,39 @@ void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoC
 
 }
 
+//Josh - takes motor power, a distance in encoded degrees and the gyro sensor port.
+//moves forward, turns 180 degrees, moves forward again to knock down first domino.
+void stopAndKnock (int motor_power, int ENC_LIMIT, string GYRO_SENSOR_PORT)
+{
+	nMotorEncoder(motorA) = 0;
+	motor[motorA] = motor[motorD] = motor_power;
+
+	while(nMotorEncoder < ENC_LIMIT)
+	{}
+
+	motor[motorA] = motor[motorD] = 0;
+
+	resetGyro(GYRO_SENSOR_PORT);
+
+	motor[motorA] = motor_power;
+	motor[motorD] = - motor_power;
+
+	while(getGyroDegrees(GYRO_SENSOR_PORT) < 180)
+	{}
+
+	nMotorEncoder(motorA) = 0;
+
+	motor[motorA] = motor[motorD] = 0;
+	motor[motorA] = motor[motorD] = motor_power;
+
+	while(nMotorEncoder(motorA) < ENC_LIMIT)
+	{}
+
+	motor[motorA] = motor[motorD] = 0;
+
+}
+
+
 // Calculation Functions
 float calcModulus(int x1, int x2)
 {
