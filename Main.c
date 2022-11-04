@@ -183,19 +183,18 @@ void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in 
 
 //Josh - takes UltraSonic sensor port, max distance from an object and motor power.
 //Stops motors, displays message and plays a sound. continues when object is moved.
-void somethingInTheWay (int US_SENSOR_PORT, float max_dist, int motor_power)
+void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 {
-	while(sensorValue[US_SENSOR_PORT] < max_dist)
+	while(sensorValue[ULTRASONIC_PORT] < max_dist)
 	{
 		motor[motorA] = motor[motorD] = 0;
-		display.clear();
+		// TODO find function to clear display
 		displayString(5, "Please clear path ahead");
-		playSound(soundSiren2);
+		playSound(soundBeepBeep); // can change later
 	}
-		ev3StopSound.();
+		ev3StopSound();
 		motor[motorA] = motor[motorD] = motor_power;
 }
-
 
 // Calculation Functions
 float calcModulus(int x1, int x2)
