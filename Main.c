@@ -29,7 +29,7 @@ void dropDomino(int &dropIndex, int &dominoCount); // Henrique
 void openDoor();
 void closeDoor();
 
-void stopAndKnock(); // Josh??
+void stopAndKnock(); // Josh
 void somethingInTheWay(); // stops and informs the user to move the object in the way
 
 void driveDist(int mot_pow, float dist);
@@ -55,6 +55,10 @@ const int DOMINOS_AT_MAX_LOAD = 60;
 const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
 const int DOOR_SIZE = 170; // degrees
 const int DOOR_SPEED = 75;
+const int TOUCH_PORT = S3;
+const int GYRO_PORT = S2;
+const int COLOR_PORt = S1;
+const int ULTRASONIC_PORT = S4;
 
 task main()
 {
@@ -87,22 +91,22 @@ void followPathFromFile()
 
 void configureAllSensors()
 {
-	SensorType[S3] = sensorEV3_Touch;
-	SensorType[S2] = sensorEV3_Gyro;
+	SensorType[TOUCH_PORT] = sensorEV3_Touch;
+	SensorType[GYRO_PORT] = sensorEV3_Gyro;
 	wait1Msec(50);
-	SensorType[S1] = sensorEV3_Color;
+	SensorType[COLOR_PORT] = sensorEV3_Color;
 	wait1Msec(50);
-	SensorType[S4] = sensorEV3_Ultrasonic;
+	SensorType[ULTRASONIC_PORT] = sensorEV3_Ultrasonic;
 	wait1Msec(50);
-	SensorMode[S2] = modeEV3Gyro_Calibration;
+	SensorMode[GYRO_PORT] = modeEV3Gyro_Calibration;
 	wait1Msec(50);
-	SensorMode[S1] = modeEV3Color_Color;
+	SensorMode[COLOR_PORT] = modeEV3Color_Color;
 	wait1Msec(100);
-	SensorMode[S2] = modeEV3Gyro_RateAndAngle;
+	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
 	wait1Msec(50);
 }
 
-void selectMode(int &mode)
+void selectMode(bool &mode)
 {
 	displayBigTextLine(5, "Choose Mode");
 	displayBigTextLine(7, "Left - Follow Line");
@@ -119,6 +123,7 @@ void selectMode(int &mode)
 	{
 		mode = 1;
 	}
+
 }
 
 void driveDist(int mot_pow, float dist) // input negative motor power for backwards
@@ -135,6 +140,10 @@ void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoC
 	nMotorEncoder[motorD] = 0;
 	while(nMotorEncoder[motorD] < distToDeg(dist))
 	{
+		if(dominoCount = 0)
+		{
+			//TODO
+		}
 		dropDomino(dropIndex, dominoCount);
 	}
 
@@ -142,30 +151,30 @@ void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoC
 
 //Josh - takes motor power, a distance in encoded degrees and the gyro sensor port.
 //moves forward, turns 180 degrees, moves forward again to knock down first domino.
-void stopAndKnock (int motor_power, int ENC_LIMIT, string GYRO_SENSOR_PORT)
+void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in functions
 {
-	nMotorEncoder(motorA) = 0;
+	nMotorEncoder[motorA] = 0;
 	motor[motorA] = motor[motorD] = motor_power;
 
-	while(nMotorEncoder < ENC_LIMIT)
+	while(nMotorEncoder[motorA] < enc_limit)
 	{}
 
 	motor[motorA] = motor[motorD] = 0;
 
-	resetGyro(GYRO_SENSOR_PORT);
+	resetGyro(GYRO_PORT);
 
 	motor[motorA] = motor_power;
-	motor[motorD] = - motor_power;
+	motor[motorD] = -1*motor_power;
 
-	while(getGyroDegrees(GYRO_SENSOR_PORT) < 180)
+	while(getGyroDegrees(GYRO_PORT) < 180)
 	{}
 
-	nMotorEncoder(motorA) = 0;
+	nMotorEncoder[motorA] = 0;
 
 	motor[motorA] = motor[motorD] = 0;
 	motor[motorA] = motor[motorD] = motor_power;
 
-	while(nMotorEncoder(motorA) < ENC_LIMIT)
+	while(nMotorEncoder[motorA] < enc_limit)
 	{}
 
 	motor[motorA] = motor[motorD] = 0;
@@ -258,6 +267,7 @@ void dropDomino(int &dropIndex, int &dominoCount)
 		motor[MotorB] = 0;
 	}
 	openDoor();
+	dominoCount--;
 	driveDist(15, DIST_BETWEEN_DOMINOS);
 	closeDoor();
 }
