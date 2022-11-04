@@ -199,31 +199,31 @@ void dropDomino(int &dropIndex, int &dominoCount)
 {
 	if (dropIndex = 0)
 	{
-			motor[MotorB] = 15;
-			while (nMotorEncoder(motorB)<130)
-			{}
-			motor[MotorB] = 0;
-			dropIndex += 1;
+		motor[MotorB] = 15;
+		while (nMotorEncoder(motorB)<130)
+		{}
+		motor[MotorB] = 0;
+		dropIndex += 1;
 	}
 	if (dropIndex = 1)
 	{
-			motor[MotorB] = 15;
-			while (nMotorEncoder(motorB)<160)
-			{}
-			motor[MotorB]= 0;
-			dropIndex += 1;
+		motor[MotorB] = 15;
+		while (nMotorEncoder(motorB)<160)
+		{}
+		motor[MotorB]= 0;
+		dropIndex += 1;
 	}
 
 	if (dropIndex = 2)
 	{
-			motor[MotorB] = 15;
-			while (nMotorEncoder(motorB)<220)
-			{}
-			motor[MotorB] = 0;
-			wait1Msec(100);
-			motor[MotorB] = -15;
-			while (nMotorEncoder(motorB)<0);
-			motor[MotorB] = 0;
+		motor[MotorB] = 15;
+		while (nMotorEncoder(motorB)<220)
+		{}
+		motor[MotorB] = 0;
+		wait1Msec(100);
+		motor[MotorB] = -15;
+		while (nMotorEncoder(motorB)<0);
+		motor[MotorB] = 0;
 	}
 	openDoor();
 	driveDist(15, DIST_BETWEEN_DOMINOS);
