@@ -23,14 +23,18 @@ Sensor Ports:
 */
 
 void configureAllSensors();
+void selectMode(bool &mode);
 
-void dropDomino(); // Henrique
-void openDoor()
-void closeDoor()
+// movement functions
+void dropDomino(int &dropIndex, int &dominoCount); // Henrique
+void openDoor();
+void closeDoor();
+
 void stopAndKnock(); // Josh??
-void objectInTheWay(); // stops and informs the user to move the object in the way
+void somethingInTheWay(); // stops and informs the user to move the object in the way
+
 void driveDist(int mot_pow, float dist);
-void driveDistWhileDispensing(int mot_pow, float dist);
+void driveDistWhileDispensing(int mot_pow, float dist, int &dropIndex, int &dominoCount);
 void setDriveTrainSpeed(int speed);
 
 void followLine(); // Sean
@@ -50,14 +54,36 @@ float degToDist(int deg);
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
 const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
+const int DOOR_SIZE = 170; // degrees
+const int DOOR_SPEED = 75;
 
 task main()
 {
-	nMotorEncoder(motorB)=0;
-  const int DOOR_SIZE=170;
-  int dropIndex = 0;
 	configureAllSensors();
-	int dominoCount = DOMINOS_AT_MAX_LOAD;
+	// initialization for domino dropping
+	nMotorEncoder(motorB)=0;
+  int dropIndex = 0;
+  int dominoCount = DOMINOS_AT_MAX_LOAD;
+  bool mode = 0; // 0 for line follow, 1 for file path
+  selectMode(mode);
+  if(mode)
+  {
+  	followLine();
+	}
+	else
+	{
+		followPathFromFile();
+	}
+}
+
+void followLine()
+{
+
+}
+
+void followPathFromFile()
+{
+
 }
 
 void configureAllSensors()
@@ -77,6 +103,25 @@ void configureAllSensors()
 	wait1Msec(50);
 }
 
+void selectMode(int &mode)
+{
+	displayBigTextLine(5, "Choose Mode");
+	displayBigTextLine(7, "Left - Follow Line");
+	displayBigTextLine(9, "Right - Follow Path from File");
+
+	while(!getButtonPress(buttonLeft) && !getButtonPress(buttonRight))
+	{}
+
+	if(getButtonPress(buttonLeft))
+	{
+		mode = 0;
+	}
+	else if(getButtonPress(buttonRight))
+	{
+		mode = 1;
+	}
+}
+
 void driveDist(int mot_pow, float dist) // input negative motor power for backwards
 {
 	setDriveTrainSpeed(mot_pow);
@@ -86,11 +131,17 @@ void driveDist(int mot_pow, float dist) // input negative motor power for backwa
 	setDriveTrainSpeed(0);
 }
 
-void driveDistWhileDispensing(int mot_pow, int dist)
+void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoCount)
 {
+	nMotorEncoder[motorD] = 0;
+	while(nMotorEncoder[motorD] < distToDeg(dist))
+	{
+		dropDomino(dropIndex, dominoCount);
+	}
 
 }
 
+// Calculation Functions
 float calcModulus(int x1, int x2)
 {
 	return sqrt(pow(x1,2) + pow(x2,2));
@@ -122,43 +173,45 @@ void setDriveTrainSpeed(int speed)
 	motor[motorA] = motor[motorD] = speed;
 }
 
-//Henrique's functions
+// Henrique's functions
 void openDoor()
 {
-	nMotorEncoder(motorC)=0;
-	motor[motorC] = 75;
+	nMotorEncoder(motorC) = 0;
+	motor[motorC] = DOOR_SPEED;
 	while (nMotorEncoder(motorC)<DOOR_SIZE)
 	{}
 	motor[motorC] = 0;
 
 	return;
 }
+
 void closeDoor()
 {
-	motor[motorC] = -75;
+	motor[motorC] = -1*DOOR_SPEED;
 	while (nMotorEncoder(motorC)>5)
 	{}
 	motor[motorC] = 0;
 
 	return;
 }
-void dropDomino()
+
+void dropDomino(int &dropIndex, int &dominoCount)
 {
 	if (dropIndex = 0)
 	{
 			motor[MotorB] = 15;
 			while (nMotorEncoder(motorB)<130)
 			{}
-			motor[MotorB]=0;
-			dropIndex +=1;
+			motor[MotorB] = 0;
+			dropIndex += 1;
 	}
 	if (dropIndex = 1)
 	{
 			motor[MotorB] = 15;
 			while (nMotorEncoder(motorB)<160)
 			{}
-			motor[MotorB]=0;
-			dropIndex +=1;
+			motor[MotorB]= 0;
+			dropIndex += 1;
 	}
 
 	if (dropIndex = 2)
@@ -167,14 +220,12 @@ void dropDomino()
 			while (nMotorEncoder(motorB)<220)
 			{}
 			motor[MotorB] = 0;
-			wait1Msec(100)
+			wait1Msec(100);
 			motor[MotorB] = -15;
-			while (nMotorEncoder(motorB)<0)
+			while (nMotorEncoder(motorB)<0);
 			motor[MotorB] = 0;
 	}
-	openDoor()
-	driveDist(3.6)
-	closeDoor()
-
-	return;
+	openDoor();
+	driveDist(15, DIST_BETWEEN_DOMINOS);
+	closeDoor();
 }
