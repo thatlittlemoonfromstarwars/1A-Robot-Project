@@ -2,7 +2,7 @@
 Domino layer path follower
 Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 
-v1.0
+v1.1
 
 Assumptions:
 
@@ -18,7 +18,6 @@ Sensor Ports:
 2 - gyro
 3 - touch
 4 - ultrasonic
-
 
 */
 
