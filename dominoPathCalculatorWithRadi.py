@@ -20,10 +20,13 @@ class Instruction:
         self.ang = ang # negative if left, positive if right
 
     def __str__(self):
-        return f'{self.len} {self.rad} {self.ang})'
+        return f'{self.len} {self.ang})'
 
 def subVectors(v1,v2):
     return (v1.x-v2.x, v1.y-v2.y)
+
+def addVectors(v1,v2):
+    return (v1.x+v2.x, v1.y+v2.y)
 
 # Finds if 2 given line segments intersect or not
 # From: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
@@ -134,7 +137,7 @@ def convertCoordsToInstructions(coords, rad):
         start_ang1 = math.atan(coords[0].y/coords[0].x)
         start_len = math.sqrt(math.pow(coords[0].x, 2) + math.pow(coords[0].y, 2))
         start_ang2 = getAngle((0,0), coords[0], coords[0], subVectors(coords[1],coords[0]))
-        print (start_ang1 + " " + start_len + " " + start_ang2)
+        print (str(start_ang1) + " " + str(start_len) + " " + str(start_ang2)) # KEEP WORKING TODO
         # File Format
         # 1     radius
         # 2     angle, length, angle <- to get robot to starting position
