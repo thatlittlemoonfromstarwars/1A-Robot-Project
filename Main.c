@@ -42,10 +42,6 @@ void followPathFromFile(); // Andor
 void driveToStartLocation(); // Andor
 
 // calculation functions
-void calcPath(); // Andor
-float calcModulus(int x1, int x2);
-int calcAngle(int x1, int x2, int y1, int y2);
-int calcLength(int x1, int x2, int y1, int y2);
 int distToDeg(float dist);
 float degToDist(int deg);
 
@@ -86,7 +82,7 @@ void followLine()
 
 void followPathFromFile()
 {
-
+ // DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
 }
 
 void configureAllSensors()
@@ -194,22 +190,6 @@ void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 	}
 		ev3StopSound();
 		motor[motorA] = motor[motorD] = motor_power;
-}
-
-// Calculation Functions
-float calcModulus(int x1, int x2)
-{
-	return sqrt(pow(x1,2) + pow(x2,2));
-}
-
-int calcAngle(int x1, int x2, int y1, int y2)
-{
-	return acos((x1*y1 + x2*y2)/(calcModulus(x1,x2)*calcModulus(y1,y2)));
-}
-
-int calcLength(int x1, int x2, int y1, int y2)
-{
-	// TODO
 }
 
 void followPathFromFile()

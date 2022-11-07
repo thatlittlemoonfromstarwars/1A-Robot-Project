@@ -13,6 +13,15 @@ class Point:
     def __str__(self):
         return f'({self.x}, {self.y})'
 
+class Instruction:
+
+    def __init__(self, len, rad, ang):
+        self.len = len
+        self.rad = rad
+        self.ang = ang
+
+    def __str__(self):
+        return f'{self.len} {self.rad} {self.ang})'
 # Finds if 2 given line segments intersect or not
 # From: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
 
@@ -105,6 +114,32 @@ def getAngle(p1,p2,p3,p4):
     ang_deg = math.degrees(angle)%360
     return ang_deg
 
+def convertCoordsToInstructions(coords):
+    # TODO
+    # converts coords to (drive distance, radius, arc angle)
+    allInst = [] # list of type Instruction
+
+    # First instruction just (angle, dist, angle) to get robot in starting position
+
+    # For each coordinate:
+    # - calculate drive length (modulus minus length to point where robot starts turning) TODO
+    # - calculate radius
+    # - calculate rotation angle
+
+    # save to file
+    file = open('drive_coords.txt', 'w')
+    try:
+        # write to file
+        for i in range(len(coords)):
+            file.write(str(coords[i].x) + " " + str(coords[i].y))
+            if(i != len(coords)-1):
+                file.write("\n")
+            
+    except:
+        print("Unable to open file")
+    
+    file.close()
+
 def main():
     pygame.init()
 
@@ -125,20 +160,9 @@ def main():
         for event in pygame.event.get():
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE) or event.type == QUIT:
                 # before program ends
-                file = open('drive_coords.txt', 'w')
-                try:
-                    # write to file
-                    for i in range(len(coords)):
-                        file.write(str(coords[i].x) + " " + str(coords[i].y))
-                        if(i != len(coords)-1):
-                            file.write("\n")
-                        
-                except:
-                    print("Unable to open file")
-                
-                file.close()
+                convertCoordsToInstructions(coords)
 
-
+                # print coords
                 for i in range(len(coords)):
                     print("(" + str(coords[i].x) + ", " + str(coords[i].y) + ")")
                     
@@ -178,6 +202,7 @@ def main():
                     
                 if legal_line:
                     if line_count != -1:
+                        # TODO draw arcs along with lines
                         pygame.draw.aaline(DISPLAY, BLUE, (prev_point.x, prev_point.y), (new_point.x, new_point.y))
                         pygame.display.flip()
                     coords.append(Point(new_point.x, new_point.y))
