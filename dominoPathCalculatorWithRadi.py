@@ -15,13 +15,16 @@ class Point:
 
 class Instruction:
 
-    def __init__(self, len, rad, ang):
+    def __init__(self, len, ang):
         self.len = len
-        self.rad = rad
-        self.ang = ang
+        self.ang = ang # negative if left, positive if right
 
     def __str__(self):
         return f'{self.len} {self.rad} {self.ang})'
+
+def subVectors(v1,v2):
+    return (v1.x-v2.x, v1.y-v2.y)
+
 # Finds if 2 given line segments intersect or not
 # From: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
 
@@ -114,22 +117,29 @@ def getAngle(p1,p2,p3,p4):
     ang_deg = math.degrees(angle)%360
     return ang_deg
 
-def convertCoordsToInstructions(coords):
+def convertCoordsToInstructions(coords, rad):
     # TODO
     # converts coords to (drive distance, radius, arc angle)
     allInst = [] # list of type Instruction
 
-    # First instruction just (angle, dist, angle) to get robot in starting position
-
     # For each coordinate:
     # - calculate drive length (modulus minus length to point where robot starts turning) TODO
-    # - calculate radius
-    # - calculate rotation angle
+    # - calculate rotation angle TODO
 
     # save to file
     file = open('drive_coords.txt', 'w')
     try:
         # write to file
+        # First instruction just (angle, dist, angle) to get robot in starting position TODO
+        start_ang1 = math.atan(coords[0].y/coords[0].x)
+        start_len = math.sqrt(math.pow(coords[0].x, 2) + math.pow(coords[0].y, 2))
+        start_ang2 = getAngle((0,0), coords[0], coords[0], subVectors(coords[1],coords[0]))
+        print (start_ang1 + " " + start_len + " " + start_ang2)
+        # File Format
+        # 1     radius
+        # 2     angle, length, angle <- to get robot to starting position
+        # 3     instruction body formatted: length, angle
+        # last  length, 500 <- tells program to stop
         for i in range(len(coords)):
             file.write(str(coords[i].x) + " " + str(coords[i].y))
             if(i != len(coords)-1):
@@ -160,7 +170,7 @@ def main():
         for event in pygame.event.get():
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE) or event.type == QUIT:
                 # before program ends
-                convertCoordsToInstructions(coords)
+                convertCoordsToInstructions(coords, RADIUS_IN_PIXELS)
 
                 # print coords
                 for i in range(len(coords)):
