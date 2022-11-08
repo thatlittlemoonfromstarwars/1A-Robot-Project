@@ -23,10 +23,10 @@ class Instruction:
         return f'{self.len} {self.ang})'
 
 def subVectors(v1,v2):
-    return (v1.x-v2.x, v1.y-v2.y)
+    return Point(v1.x-v2.x, v1.y-v2.y)
 
 def addVectors(v1,v2):
-    return (v1.x+v2.x, v1.y+v2.y)
+    return Point(v1.x+v2.x, v1.y+v2.y)
 
 # Finds if 2 given line segments intersect or not
 # From: https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
@@ -120,38 +120,80 @@ def getAngle(p1,p2,p3,p4):
     ang_deg = math.degrees(angle)%360
     return ang_deg
 
+def getLength(vect):
+    return math.sqrt(math.pow(vect.x, 2) + math.pow(vect.y, 2))
+
 def convertCoordsToInstructions(coords, rad):
     # TODO
-    # converts coords to (drive distance, radius, arc angle)
-    allInst = [] # list of type Instruction
-
+    # converts coords to (drive distance, turn angle)
+    allInst = []
     # For each coordinate:
     # - calculate drive length (modulus minus length to point where robot starts turning) TODO
     # - calculate rotation angle TODO
 
     # save to file
-    file = open('drive_coords.txt', 'w')
+    
+    # write to file
+    # First instruction just (angle, dist, angle) to get robot in starting position TODO
+    start_ang = int(math.degrees(math.atan(coords[0].y/coords[0].x))%360)
+    
+    print(str(start_ang) + "\n") # KEEP WORKING TODO
+    # File Format
+    # Line  Description
+    # 1     radius
+    # 2     angle <- to get robot to starting position
+    # 3     instruction body formatted: length, angle
+    # last  length, 500 <- tells program to stop
+    
+    # based geometric way
+    prevPoint = Point(0,0)
+    prevAng = 0
+    for i in range(len(coords)):
+        currentPoint = coords[i]
+        v1 = subVectors(currentPoint, prevPoint)
+        if currentPoint.x - prevPoint.x > 0:
+            if currentPoint.y - prevPoint.y > 0:
+                ang = math.atan
+
+        ang = math.atan(v1.y/v1.x)-prevAng
+        prevAng = ang
+
+        ang_deg = math.degrees(ang)%360
+        if ang_deg > 180:
+            ang_deg = ang_deg-360
+        
+        prevPoint = currentPoint
+
+        length = getLength(v1)
+        allInst.append(Instruction(length, ang_deg))
+
+    # stupid linear algebra way
+    # for i in range(len(coords)-2):
+    #     if i == 0:
+    #         v1 = coords[i]
+    #     else:
+    #         v1 = subVectors(coords[i],coords[i-1])
+    #     v2 = subVectors(subVectors(coords[i+1], coords[i]),v1)
+
+    #     length = getLength(v1) # get path length
+    #     ang = getAngle(Point(0,0), v1, Point(0,0), v2) # get turn angle
+    #     allInst.append(Instruction(length, ang))
+    #     print(str(length) + " " + str(ang))
+
     try:
-        # write to file
-        # First instruction just (angle, dist, angle) to get robot in starting position TODO
-        start_ang1 = math.atan(coords[0].y/coords[0].x)
-        start_len = math.sqrt(math.pow(coords[0].x, 2) + math.pow(coords[0].y, 2))
-        start_ang2 = getAngle((0,0), coords[0], coords[0], subVectors(coords[1],coords[0]))
-        print (str(start_ang1) + " " + str(start_len) + " " + str(start_ang2)) # KEEP WORKING TODO
-        # File Format
-        # 1     radius
-        # 2     angle, length, angle <- to get robot to starting position
-        # 3     instruction body formatted: length, angle
-        # last  length, 500 <- tells program to stop
-        for i in range(len(coords)):
-            file.write(str(coords[i].x) + " " + str(coords[i].y))
-            if(i != len(coords)-1):
-                file.write("\n")
-            
+        file = open('drive_instructions.txt', 'w')
+        file.write(str(rad) + "\n")
+        file.write(str(start_ang) + "\n")
+        for tempInst in allInst:
+            file.write(str(int(tempInst.len)) + " " + str(int(tempInst.ang)) + "\n")
+        
+        file.close()
     except:
         print("Unable to open file")
+            
     
-    file.close()
+    
+    
 
 def main():
     pygame.init()
@@ -182,6 +224,9 @@ def main():
                 pygame.quit()
                 sys.exit()
 
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                convertCoordsToInstructions(coords, RADIUS_IN_PIXELS)
+            
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x,y = pygame.mouse.get_pos()
                 new_point = Point(x,y)
@@ -209,7 +254,7 @@ def main():
                     # check if angle between old and new line is more than 15 degrees
                     # finds angle in relation to x axis (for some reason)
                     angle = getAngle(new_point, prev_point, coords[line_count-1], prev_point)
-                    print(angle)
+                    print(int(angle))
                     if angle < ANGLE_TOLERANCE:
                         legal_line = False
                     
