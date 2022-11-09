@@ -41,7 +41,8 @@ void followLine(); // Sean
 
 void followPathFromFile(); // Andor
 void driveToStartLocation(); // Andor
-void getCoordsFromFile(int* coordsX, int* coordsY);
+int getCoordsFromFile(int* coordsX, int* coordsY);
+float calcLength(int curX, int curY, int prevX, int prevY);
 
 // calculation functions
 int distToDeg(float dist);
@@ -65,13 +66,13 @@ task main()
 	configureAllSensors();
 	// initialization for domino dropping
 	nMotorEncoder(motorB)=0;
-  int dropIndex = 0;
-  int dominoCount = DOMINOS_AT_MAX_LOAD;
-  bool mode = false; // false for line follow, true for file path
-  selectMode(mode);
-  if(mode)
-  {
-  	followLine();
+	int dropIndex = 0;
+	int dominoCount = DOMINOS_AT_MAX_LOAD;
+	bool mode = false; // false for line follow, true for file path
+	selectMode(mode);
+	if(mode)
+	{
+		followLine();
 	}
 	else
 	{
@@ -86,14 +87,25 @@ void followLine()
 
 void followPathFromFile()
 {
- 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
+	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
 	int coordsX[MAX_COORDS];
 	int coordsY[MAX_COORDS];
-	getCoordsFromFile(coordsX, coordsY);
+	int num_coords = getCoordsFromFile(coordsX, coordsY);
+	int prevX = 0;
+	int prevY = 0;
+
+	for(int coord_index = 0; coord_index < num_coords; num_coords++)
+	{
+		float drive_length = calcLength(coordsX[coord_index], coordsY[coord_index], prevX, prevY);
+
+		// TODO convert from pixels to cm
+		int angleToTurn = calcAngle();//TODO
+
+	}
 
 }
 
-void getCoordsFromFile(int* coordsX, int* coordsY)
+int getCoordsFromFile(int* coordsX, int* coordsY)
 {
 	TFileHandle fin;
 	bool fileOkay = openReadPC(fin,"drive_coords.txt");
@@ -113,6 +125,12 @@ void getCoordsFromFile(int* coordsX, int* coordsY)
 	}
 
 	closeFilePC(fin);
+	return num_coords;
+}
+
+float calcLength(int curX, int curY, int prevX, int prevY)
+{
+	return sqrt(pow(curX-prevX,2) + pow(curY-prevY, 2));
 }
 
 void configureAllSensors()
@@ -218,8 +236,8 @@ void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 		displayString(5, "Please clear path ahead");
 		playSound(soundBeepBeep); // can change later
 	}
-		ev3StopSound();
-		motor[motorA] = motor[motorD] = motor_power;
+	ev3StopSound();
+	motor[motorA] = motor[motorD] = motor_power;
 }
 
 void followPathFromFile()
