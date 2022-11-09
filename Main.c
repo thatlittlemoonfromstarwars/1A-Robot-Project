@@ -21,6 +21,7 @@ Sensor Ports:
 
 */
 
+#include "PC_FileIO.c";
 void configureAllSensors();
 void selectMode(bool &mode);
 
@@ -40,6 +41,7 @@ void followLine(); // Sean
 
 void followPathFromFile(); // Andor
 void driveToStartLocation(); // Andor
+void getCoordsFromFile(int* coordsX, int* coordsY);
 
 // calculation functions
 int distToDeg(float dist);
@@ -48,6 +50,8 @@ float degToDist(int deg);
 // constants
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
+const int MAX_COORDS = 50;
+const int PIXELS_PER_CM = 15;
 const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
 const int DOOR_SIZE = 170; // degrees
 const int DOOR_SPEED = 75;
@@ -82,7 +86,33 @@ void followLine()
 
 void followPathFromFile()
 {
- // DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
+ 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
+	int coordsX[MAX_COORDS];
+	int coordsY[MAX_COORDS];
+	getCoordsFromFile(coordsX, coordsY);
+
+}
+
+void getCoordsFromFile(int* coordsX, int* coordsY)
+{
+	TFileHandle fin;
+	bool fileOkay = openReadPC(fin,"drive_coords.txt");
+
+	int num_coords = 0;
+	readIntPC(fin, num_coords);
+
+	int tempX = 0;
+	int tempY = 0;
+
+	for(int read_index = 0; read_index < num_coords; read_index++)
+	{
+		readIntPC(fin, tempX);
+		readIntPC(fin, tempY);
+		coordsX[read_index] = tempX;
+		coordsY[read_index] = tempY;
+	}
+
+	closeFilePC(fin);
 }
 
 void configureAllSensors()

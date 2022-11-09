@@ -129,6 +129,7 @@ def main():
                 file = open('drive_coords.txt', 'w')
                 try:
                     # write to file
+                    file.write(str(len(coords)) + "\n")
                     for i in range(len(coords)):
                         file.write(str(coords[i].x) + " " + str(coords[i].y))
                         if(i != len(coords)-1):
