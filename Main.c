@@ -36,7 +36,7 @@ void somethingInTheWay(); // stops and informs the user to move the object in th
 void driveDist(int mot_pow, float dist);
 void driveDistWhileDispensing(int mot_pow, float dist, int &dropIndex, int &dominoCount);
 void setDriveTrainSpeed(int speed);
-void turnInPlace(int angle, int mot_pow);
+void turnInPlace(int angle, int mot_pow); // NEEDS TO BE WRITTEN
 
 void followLine(); // Sean
 
@@ -98,7 +98,7 @@ void followPathFromFile()
 	int first_angle = atan(coordsY[0]/coordsX[0])*180/PI;
 
 	turnInPlace(first_angle, 20);
-	driveDist(first_length);
+	driveDist(50, first_length);
 
 	// turn towards second point
 	turnInPlace(calcAngle(coordsX[1], coordsY[1], coordsX[1]-coordsX[0], coordsY[1]-coordsY[0]), 20);
@@ -115,7 +115,7 @@ void followPathFromFile()
 		{
 			int angleToTurn = calcAngle(coordsX[coord_index+1], coordsY[coord_index+1], coordsX[coord_index+1]-coordsX[coord_index], coordsY[coord_index+1]-coordsY[coord_index])*180/PI;
 			// FOR TESTING ONLY
-			turnInPlace(angleToTurn);
+			turnInPlace(angleToTurn, 20);
 		}
 	}
 
