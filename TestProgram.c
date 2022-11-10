@@ -1,10 +1,16 @@
 void configureAllSensors();
 
-const int PISTON_CODE_POWER = 75;
-const int DOOR_POWER = 10;
-const int DOOR_UP_LIMIT = 720;
+const int PISTON_POWER = 75;
+const int PISTON_CYCLE_POWER = 25;
+const int POSITION_2_ENC = -300;
+const int POSITION_3_ENC = -400;
+const int DOOR_POWER = 25;
+const int DOOR_UP_LIMIT = 100;
 const int DOOR_DOWN_LIMIT = 0;
 const int DRIVE_CODE_POWER = 25;
+const type PUSH_MOTOR = "motorC"; //change type
+const type DOOR_MOTOR = "motorB"; //change type
+
 
 task main()
 {
@@ -17,6 +23,7 @@ task main()
 	displayString(9, "Press Right for drive forward");
 
 	configureAllSensors();
+	
 	while(true)
 	{
 		while(true)
@@ -44,59 +51,116 @@ task main()
 
 		if(piston_arm)
 		{
-			displayString(5, "Press down for 5% power");
-			displayString(7, "Press left for 25% power");
-			displayString(9, "press enter for code power");
-			displayString(11, "Press right for 50% power");
-			displayString(13, "Press up for 100% power");
+			displayString(5, "Press Down for Position 1");
+			displayString(7, "Press Enter for Position 2");
+			displayString(9, "Press Up for position 3");
+			displayString(11, "Press Right for cycle");
+			displayString(13, "Press left to break");
+			
+			nMotorEncoder(PUSH_MOTOR) = 0;
 
 			while(true)
 			{
+				while(!getButtonPress(buttonAny))
+				{}
+
 				if(getButtonPress(buttonDown))
 				{
-					motor[motorB] = 5;
+					motor[PUSH_MOTOR] = PISTON_POWER;
+					while (nMotorEncoder(PUSH_MOTOR) < 0)
+					{}
+					motor[PUSH_MOTOR] = 0;
 				}
-				else if(getButtonPress(buttonLeft))
+				if(getButtonPress(buttonEnter))
 				{
-					motor[motorB] = 25;
+					motor[PUSH_MOTOR] = -PISTON_POWER;
+					while (nMotorEncoder(PUSH_MOTOR) > POSITION_2_ENC)
+					{}
+					motor[PUSH_MOTOR] = 0;
 				}
-				else if(getButtonPress(buttonEnter))
+				if(getButtonPress(buttonEnter))
 				{
-					motor[motorB] = PISTON_CODE_POWER;
+					motor[PUSH_MOTOR] = -PISTON_POWER;
+					while (nMotorEncoder(PUSH_MOTOR) > POSITION_3_ENC)
+					{}
+					motor[PUSH_MOTOR] = 0;
 				}
-				else if(getButtonPress(buttonRight))
+				//cycle
+				if(getButtonPress(buttonRight))
 				{
-					motor[motorB] = 50;
+					eraseDisplay();
+					displayString(7, "Press Enter to break");
+					
+					while(!getButtonPress(buttonEnter))
+					{
+						if(!getButtonPress(buttonEnter))
+						{
+							motor[PUSH_MOTOR] = PISTON_CYCLE_POWER;
+							while (nMotorEncoder(PUSH_MOTOR) < 0)
+							{
+								if(getButtonPress(buttonEnter))
+								{
+									break;
+								}
+							}
+							motor[PUSH_MOTOR] = 0;
+						}
+						
+						if(!getButtonPress(buttonEnter))
+						{
+							motor[PUSH_MOTOR] = -PISTON_CYCLE_POWER;
+							while (nMotorEncoder(PUSH_MOTOR) > POSITION_2_ENC)
+							{
+								if(getButtonPress(buttonEnter))
+								{
+									break;
+								}
+							}
+							motor[PUSH_MOTOR] = 0;
+						}
+						
+						if(!getButtonPress(buttonEnter))
+						{
+							motor[PUSH_MOTOR] = -PISTON_CYCLE_POWER;
+							while (nMotorEncoder(PUSH_MOTOR) > POSITION_3_ENC)
+							{
+								if(getButtonPress(buttonEnter))
+								{
+									break;
+								}
+							}
+							motor[PUSH_MOTOR] = 0;
+						}
+					}
 				}
-				else if(getButtonPress(buttonUp))
+				//cycle
+				
+				if(getButtonPress(buttonLeft))
 				{
-					motor[motorB] = 100;
+					break;
 				}
+				while(getButtonPress(buttonAny))
+				{}
 			}
-
-			wait1Msec(1000);
 			eraseDisplay();
-			displayString(7, "Press enter to stop");
-			while(!getButtonPress(buttonEnter))
-			{}
-			motor[motorB] = 0;
-
 		}
+		
 		else if(door)
 		{
 			displayString(7, "Press enter to stop");
+			nMoterEncoder[DOOR_MOTOR] = 0;
 
 			while(!getButtonPress(buttonEnter))
 			{
-				motor[motorC] = DOOR_POWER;
-				while(nMotorEncoder[motorC] < DOOR_UP_LIMIT)
+				motor[DOOR_MOTOR] = DOOR_POWER;
+				while(nMotorEncoder(DOOR_MOTOR) < DOOR_UP_LIMIT)
 				{}
 
-				motor[motorC] = -DOOR_POWER;
-				while(nMotorEncoder[motorC] > DOOR_DOWN_LIMIT)
+				motor[DOOR_MOTOR] = -DOOR_POWER;
+				while(nMotorEncoder(DOOR_MOTOR) > DOOR_DOWN_LIMIT)
 				{}
 			}
-			motor[motorC] = 0;
+			motor[DOOR_MOTOR] = 0;
 			eraseDisplay();
 
 		}
@@ -137,7 +201,7 @@ task main()
 			displayString(7, "Press enter to stop");
 			while(!getButtonPress(buttonEnter))
 			{}
-			motor[motorA] = motor[motorB] = 0;
+			motor[motorA] = motor[PUSH_MOTOR] = 0;
 		}
 	}
 }
