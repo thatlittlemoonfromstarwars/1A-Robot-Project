@@ -36,13 +36,14 @@ void somethingInTheWay(); // stops and informs the user to move the object in th
 void driveDist(int mot_pow, float dist);
 void driveDistWhileDispensing(int mot_pow, float dist, int &dropIndex, int &dominoCount);
 void setDriveTrainSpeed(int speed);
+void turnInPlace(int angle, int mot_pow);
 
 void followLine(); // Sean
 
 void followPathFromFile(); // Andor
-void driveToStartLocation(); // Andor
 int getCoordsFromFile(int* coordsX, int* coordsY);
 float calcLength(int curX, int curY, int prevX, int prevY);
+float calcAngle(int curX, int curY, int prevX, int prevY);
 
 // calculation functions
 int distToDeg(float dist);
@@ -91,16 +92,31 @@ void followPathFromFile()
 	int coordsX[MAX_COORDS];
 	int coordsY[MAX_COORDS];
 	int num_coords = getCoordsFromFile(coordsX, coordsY);
-	int prevX = 0;
-	int prevY = 0;
+
+	// drive to first coord and turn
+	float first_length = sqrt(pow(coordsX[0],2) + pow(coordsY[0],2))/PIXELS_PER_CM;
+	int first_angle = atan(coordsY[0]/coordsX[0])*180/PI;
+
+	turnInPlace(first_angle, 20);
+	driveDist(first_length);
+
+	// turn towards second point
+	turnInPlace(calcAngle(coordsX[1], coordsY[1], coordsX[1]-coordsX[0], coordsY[1]-coordsY[0]), 20);
+
+	int prevX = coordsX[1];
+	int prevY = coordsY[1];
 
 	for(int coord_index = 0; coord_index < num_coords; num_coords++)
 	{
-		float drive_length = calcLength(coordsX[coord_index], coordsY[coord_index], prevX, prevY);
-
-		// TODO convert from pixels to cm
-		int angleToTurn = calcAngle();//TODO
-
+		float drive_length = calcLength(coordsX[coord_index], coordsY[coord_index], prevX, prevY)/PIXELS_PER_CM;
+		// FOR TESTING ONLY
+		driveDist(50, drive_length);
+		if(coord_index != num_coords)
+		{
+			int angleToTurn = calcAngle(coordsX[coord_index+1], coordsY[coord_index+1], coordsX[coord_index+1]-coordsX[coord_index], coordsY[coord_index+1]-coordsY[coord_index])*180/PI;
+			// FOR TESTING ONLY
+			turnInPlace(angleToTurn);
+		}
 	}
 
 }
@@ -131,6 +147,11 @@ int getCoordsFromFile(int* coordsX, int* coordsY)
 float calcLength(int curX, int curY, int prevX, int prevY)
 {
 	return sqrt(pow(curX-prevX,2) + pow(curY-prevY, 2));
+}
+
+float calcAngle(int curX, int curY, int prevX, int prevY)
+{
+	return asin((curY*prevX - curX*prevY)/(pow(prevX, 2)+ pow(prevY, 2)));
 }
 
 void configureAllSensors()
