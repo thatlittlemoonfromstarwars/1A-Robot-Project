@@ -2,7 +2,7 @@
 Domino layer path follower
 Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 
-v1.1
+v1.3
 
 Assumptions:
 
