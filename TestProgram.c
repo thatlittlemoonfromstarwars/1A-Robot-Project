@@ -3,7 +3,7 @@ void configureAllSensors();
 const int PISTON_POWER = 75;
 const int PISTON_CYCLE_POWER = 25;
 const int POSITION_2_ENC = -300;
-const int POSITION_3_ENC = -400;
+const int POSITION_3_ENC = -500;
 const int DOOR_POWER = 25;
 const int DOOR_UP_LIMIT = 100;
 const int DOOR_DOWN_LIMIT = 0;
