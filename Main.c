@@ -206,7 +206,7 @@ void driveDist(int mot_pow, float dist) // input negative motor power for backwa
 void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoCount)
 {
 	nMotorEncoder[motorD] = 0;
-	while(nMotorEncoder[motorD] < distToDeg(dist))
+	while(abs(nMotorEncoder[motorD]) < distToDeg(dist))
 	{
 		if(dominoCount == 0)
 		{
