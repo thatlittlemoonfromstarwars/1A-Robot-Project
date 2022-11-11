@@ -36,7 +36,7 @@ void somethingInTheWay(); // stops and informs the user to move the object in th
 void driveDist(int mot_pow, float dist);
 void driveDistWhileDispensing(int mot_pow, float dist, int &dropIndex, int &dominoCount);
 void setDriveTrainSpeed(int speed);
-void turnInPlace(int angle, int mot_pow); // NEEDS TO BE WRITTEN
+void turnInPlace(int angle, int mot_pow);
 
 void followLine(); // Sean
 
@@ -63,12 +63,17 @@ const int GYRO_PORT = S2;
 const int COLOR_PORT = S1;
 const int ULTRASONIC_PORT = S4;
 
+const int RIGHT_MOT_PORT = motorD;
+const int LEFT_MOT_PORT = motorA;
+const int DOOR_MOT_PORT = motorB;
+const int DISPENSER_MOT_PORT = motorC;
+
 task main()
 {
 	configureAllSensors();
 	// initialization for domino dropping
-	nMotorEncoder(motorC)=0;
-	nMotorEncoder(motorB)=0;
+	nMotorEncoder(DISPENSER_MOT_PORT)=0;
+	nMotorEncoder(DOOR_MOT_PORT)=0;
 	int dropIndex = 0;
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
 
@@ -200,16 +205,16 @@ void selectMode(bool &mode)
 void driveDist(int mot_pow, float dist) // input negative motor power for backwards
 {
 	setDriveTrainSpeed(mot_pow);
-	nMotorEncoder[motorA] = 0;
-	while(abs(nMotorEncoder[motorA]) < distToDeg(dist))
+	nMotorEncoder[LEFT_MOT_PORT] = 0;
+	while(abs(nMotorEncoder[LEFT_MOT_PORT]) < distToDeg(dist))
 	{}
 	setDriveTrainSpeed(0);
 }
 
 void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoCount)
 {
-	nMotorEncoder[motorD] = 0;
-	while(abs(nMotorEncoder[motorD]) < distToDeg(dist))
+	nMotorEncoder[RIGHT_MOT_PORT] = 0;
+	while(abs(nMotorEncoder[RIGHT_MOT_PORT]) < distToDeg(dist))
 	{
 		if(dominoCount == 0)
 		{
@@ -225,15 +230,15 @@ void turnInPlace(int angle, int mot_pow)
 	int initialGyro = getGyroDegrees(GYRO_PORT);
 	if(angle < 0)
 	{
-		motor[motorA] = mot_pow;
-		motor[motorB] = -1*mot_pow;
+		motor[LEFT_MOT_PORT] = mot_pow;
+		motor[DOOR_MOT_PORT] = -1*mot_pow;
 		while(getGyroDegrees(GYRO_PORT) > initialGyro-angle)
 		{}
 	}
 	else if(angle > 0)
 	{
-		motor[motorA] = -1*mot_pow;
-		motor[motorB] = mot_pow;
+		motor[LEFT_MOT_PORT] = -1*mot_pow;
+		motor[DOOR_MOT_PORT] = mot_pow;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
 		{}
 	}
@@ -245,31 +250,31 @@ void turnInPlace(int angle, int mot_pow)
 //moves forward, turns 180 degrees, moves forward again to knock down first domino.
 void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in functions
 {
-	nMotorEncoder[motorA] = 0;
-	motor[motorA] = motor[motorD] = motor_power;
+	nMotorEncoder[LEFT_MOT_PORT] = 0;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
 
-	while(nMotorEncoder[motorA] < enc_limit)
+	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
 	{}
 
-	motor[motorA] = motor[motorD] = 0;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
 
 	resetGyro(GYRO_PORT);
 
-	motor[motorA] = motor_power;
-	motor[motorD] = -1*motor_power;
+	motor[LEFT_MOT_PORT] = motor_power;
+	motor[RIGHT_MOT_PORT] = -1*motor_power;
 
 	while(getGyroDegrees(GYRO_PORT) < 180)
 	{}
 
-	nMotorEncoder[motorA] = 0;
+	nMotorEncoder[LEFT_MOT_PORT] = 0;
 
-	motor[motorA] = motor[motorD] = 0;
-	motor[motorA] = motor[motorD] = motor_power;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
 
-	while(nMotorEncoder[motorA] < enc_limit)
+	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
 	{}
 
-	motor[motorA] = motor[motorD] = 0;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
 
 }
 
@@ -279,13 +284,13 @@ void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 {
 	while(SensorValue[ULTRASONIC_PORT] < max_dist)
 	{
-		motor[motorA] = motor[motorD] = 0;
+		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
 		// TODO find function to clear display
 		displayString(5, "Please clear path ahead");
 		playSound(soundBeepBeep); // can change later
 	}
 	ev3StopSound();
-	motor[motorA] = motor[motorD] = motor_power;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
 }
 
 int distToDeg(float dist)
@@ -300,26 +305,26 @@ float degToDist(int deg)
 
 void setDriveTrainSpeed(int speed)
 {
-	motor[motorA] = motor[motorD] = -1*speed;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -1*speed;
 }
 
 // Henrique's functions
 void openDoor()
 {
-	motor[motorB] = DOOR_SPEED;
-	while (nMotorEncoder(motorB)<DOOR_ANG)
+	motor[DOOR_MOT_PORT] = DOOR_SPEED;
+	while (nMotorEncoder(DOOR_MOT_PORT)<DOOR_ANG)
 	{}
-	motor[motorB] = 0;
+	motor[DOOR_MOT_PORT] = 0;
 
 	return;
 }
 
 void closeDoor()
 {
-	motor[motorB] = -1*DOOR_SPEED;
-	while (nMotorEncoder(motorB)>5)
+	motor[DOOR_MOT_PORT] = -1*DOOR_SPEED;
+	while (nMotorEncoder(DOOR_MOT_PORT)>5)
 	{}
-	motor[motorB] = 0;
+	motor[DOOR_MOT_PORT] = 0;
 
 	return;
 }
@@ -328,26 +333,26 @@ void dropDomino(int &dropIndex, int &dominoCount)
 {
 	if (dropIndex == 0)
 	{
-		motor[motorC] = -15;
-		while (nMotorEncoder(motorC) > -325)
+		motor[DISPENSER_MOT_PORT] = -15;
+		while (nMotorEncoder(DISPENSER_MOT_PORT) > -325)
 		{}
-		motor[motorC] = 0;
+		motor[DISPENSER_MOT_PORT] = 0;
 		dropIndex += 1;
 	}
 	else if (dropIndex == 1)
 	{
-		motor[motorC] = -15;
-		while (nMotorEncoder(motorC) > -550)
+		motor[DISPENSER_MOT_PORT] = -15;
+		while (nMotorEncoder(DISPENSER_MOT_PORT) > -550)
 		{}
-		motor[motorC]= 0;
+		motor[DISPENSER_MOT_PORT]= 0;
 
 		dropIndex = 0;
 		wait1Msec(100);
 
-		motor[motorC] = 15;
-		while (nMotorEncoder(motorC) < 100)
+		motor[DISPENSER_MOT_PORT] = 15;
+		while (nMotorEncoder(DISPENSER_MOT_PORT) < 100)
 		{}
-		motor[motorC] = 0;
+		motor[DISPENSER_MOT_PORT] = 0;
 	}
 	wait1Msec(700);
 	openDoor();
