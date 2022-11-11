@@ -132,7 +132,7 @@ void openDoor()
 {
 	nMotorEncoder(motorB) = 0;
 	motor[motorB] = DOOR_SPEED;
-	while (nMotorEncoder(motorC)<DOOR_SIZE)
+	while (nMotorEncoder(motorB)<DOOR_SIZE)
 	{}
 	motor[motorB] = 0;
 
@@ -142,7 +142,7 @@ void openDoor()
 void closeDoor()
 {
 	motor[motorB] = -1*DOOR_SPEED;
-	while (nMotorEncoder(motorC)>5)
+	while (nMotorEncoder(motorB)>5)
 	{}
 	motor[motorB] = 0;
 
@@ -174,6 +174,7 @@ void dropDomino(int &dropIndex, int &dominoCount)
 		{}
 		motor[motorC] = 0;
 	}
+	wait1Msec(700);
 	openDoor();
 	dominoCount--;
 	driveDist(15, DIST_BETWEEN_DOMINOS);
