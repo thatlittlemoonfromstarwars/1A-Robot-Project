@@ -54,7 +54,7 @@ task main()
 	configureAllSensors();
 
 	// initialization for domino dropping
-	nMotorEncoder(motorB)=0;
+	nMotorEncoder(motorC)=0;
 	int dropIndex = 0;
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
 
@@ -154,21 +154,23 @@ void dropDomino(int &dropIndex, int &dominoCount)
 	if (dropIndex == 0)
 	{
 		motor[motorC] = -15;
-		while (nMotorEncoder(motorB) > -325)
+		while (nMotorEncoder(motorC) > -325)
 		{}
 		motor[motorC] = 0;
 		dropIndex += 1;
 	}
-	if (dropIndex == 1)
+	else if (dropIndex == 1)
 	{
 		motor[motorC] = -15;
-		while (nMotorEncoder(motorB) > -500)
+		while (nMotorEncoder(motorC) > -500)
 		{}
 		motor[motorC]= 0;
+
 		dropIndex = 0;
 		wait1Msec(100);
+
 		motor[motorC] = 15;
-		while (nMotorEncoder(motorB) < 20)
+		while (nMotorEncoder(motorC) < 20)
 		{}
 		motor[motorC] = 0;
 	}
