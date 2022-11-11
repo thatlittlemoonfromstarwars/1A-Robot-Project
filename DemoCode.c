@@ -42,7 +42,7 @@ const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
 const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
 const int DOOR_SIZE = 170; // degrees
-const int DOOR_SPEED = 75;
+const int DOOR_SPEED = 10;
 
 const int TOUCH_PORT = S3;
 const int GYRO_PORT = S2;
@@ -124,7 +124,7 @@ void turnInPlace(int angle, int mot_pow)
 
 void setDriveTrainSpeed(int speed)
 {
-	motor[motorA] = motor[motorD] = speed;
+	motor[motorA] = motor[motorD] = -1*speed;
 }
 
 // Henrique's functions
