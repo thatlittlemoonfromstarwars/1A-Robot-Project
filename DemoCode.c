@@ -78,6 +78,11 @@ void configureAllSensors()
 	wait1Msec(50);
 }
 
+int distToDeg(float dist)
+{
+	return dist*180/PI/WHEEL_RAD;
+}
+
 void driveDist(int mot_pow, float dist) // input negative motor power for backwards
 {
 	setDriveTrainSpeed(mot_pow);
@@ -117,34 +122,29 @@ void turnInPlace(int angle, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-int distToDeg(float dist)
-{
-	return dist*180/PI/WHEEL_RAD;
-}
-
 void setDriveTrainSpeed(int speed)
 {
-	motor[motorA] = motor[motorD] = -1*speed;
+	motor[motorA] = motor[motorD] = speed;
 }
 
 // Henrique's functions
 void openDoor()
 {
-	nMotorEncoder(motorC) = 0;
-	motor[motorC] = -1*DOOR_SPEED;
-	while (nMotorEncoder(motorC)>-1*DOOR_SIZE)
+	nMotorEncoder(motorB) = 0;
+	motor[motorB] = DOOR_SPEED;
+	while (nMotorEncoder(motorC)<DOOR_SIZE)
 	{}
-	motor[motorC] = 0;
+	motor[motorB] = 0;
 
 	return;
 }
 
 void closeDoor()
 {
-	motor[motorC] = DOOR_SPEED;
-	while (nMotorEncoder(motorC)<-5)
+	motor[motorB] = -1*DOOR_SPEED;
+	while (nMotorEncoder(motorC)>5)
 	{}
-	motor[motorC] = 0;
+	motor[motorB] = 0;
 
 	return;
 }
@@ -153,24 +153,24 @@ void dropDomino(int &dropIndex, int &dominoCount)
 {
 	if (dropIndex == 0)
 	{
-		motor[motorB] = 15;
-		while (nMotorEncoder(motorB) < 325)
+		motor[motorC] = -15;
+		while (nMotorEncoder(motorB) > -325)
 		{}
-		motor[motorB] = 0;
+		motor[motorC] = 0;
 		dropIndex += 1;
 	}
 	if (dropIndex == 1)
 	{
-		motor[motorB] = 15;
-		while (nMotorEncoder(motorB) < 500)
+		motor[motorC] = -15;
+		while (nMotorEncoder(motorB) > -500)
 		{}
-		motor[motorB]= 0;
+		motor[motorC]= 0;
 		dropIndex = 0;
 		wait1Msec(100);
-		motor[motorB] = -15;
-		while (nMotorEncoder(motorB) > -20)
+		motor[motorC] = 15;
+		while (nMotorEncoder(motorB) < 20)
 		{}
-		motor[motorB] = 0;
+		motor[motorC] = 0;
 	}
 	openDoor();
 	dominoCount--;
