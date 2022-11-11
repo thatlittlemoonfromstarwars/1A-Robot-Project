@@ -95,7 +95,7 @@ void followPathFromFile()
 
 	// drive to first coord and turn
 	float first_length = sqrt(pow(coordsX[0],2) + pow(coordsY[0],2))/PIXELS_PER_CM;
-	int first_angle = atan(coordsY[0]/coordsX[0])*180/PI;
+	int first_angle = atan2(coordsY[0], coordsX[0])*180/PI;
 
 	turnInPlace(first_angle, 20);
 	driveDist(50, first_length);
@@ -117,6 +117,9 @@ void followPathFromFile()
 			// FOR TESTING ONLY
 			turnInPlace(angleToTurn, 20);
 		}
+
+		prevX = coordsX[coord_index+1]; // CHECK THIS
+		prevY = coordsY[coord_index+1];
 	}
 
 }
