@@ -52,7 +52,7 @@ float degToDist(int deg);
 // constants
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
-const int MAX_COORDS = 50;
+const int MAX_COORDS = 100;
 const int PIXELS_PER_CM = 15;
 const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
 const int DOOR_SIZE = 170; // degrees
