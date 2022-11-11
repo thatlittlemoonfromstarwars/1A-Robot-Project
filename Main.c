@@ -60,7 +60,7 @@ float degToDist(int deg);
 // constants
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
-const int MAX_COORDS = 50;
+const int MAX_COORDS = 50; // don't type 70 here
 const int PIXELS_PER_CM = 15;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const int DOOR_ANG = 90; // degrees
@@ -121,7 +121,8 @@ void followPathFromFile()
 	point2adjusted.y = coords[1].y-coords[0].y;
 	turnInPlace(calcAngle(coords[1], point2adjusted), 20);
 
-	Coord curCoord = coords[1];
+	Coord curCoord;
+	curCoord = coords[1];
 
 	for(int coord_index = 0; coord_index < num_coords; num_coords++)
 	{
@@ -130,7 +131,8 @@ void followPathFromFile()
 		driveDist(50, drive_length);
 		if(coord_index != num_coords-1)
 		{
-			Coord nextCoord = coords[coord_index+1];
+			Coord nextCoord;
+			nextCoord = coords[coord_index+1];
 			Coord nextCoordAdj;
 			nextCoordAdj.x = nextCoord.x-curCoord.x;
 			nextCoordAdj.y = nextCoord.y-curCoord.y;
