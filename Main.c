@@ -108,10 +108,11 @@ void followPathFromFile()
 	Coord coords[MAX_COORDS];
 	int num_coords = getCoordsFromFile(coords);
 
-	// drive to first coord and turn
+	// calc how to get to starting coord
 	float first_length = sqrt(pow(coords[0].x,2) + pow(coords[0].y,2))/PIXELS_PER_CM;
 	int first_angle = atan2(coords[0].y, coords[0].x)*180/PI;
 
+	// drive to first coord and turn
 	turnInPlace(first_angle, 20);
 	driveDist(50, first_length);
 
@@ -127,16 +128,20 @@ void followPathFromFile()
 	for(int coord_index = 0; coord_index < num_coords; num_coords++)
 	{
 		float drive_length = calcLength(coords[coord_index], curCoord)/PIXELS_PER_CM;
-		// FOR TESTING ONLY
+		// FOR TESTING ONLY REPLACE LATER WITH DOMINO DROPPING
 		driveDist(50, drive_length);
 		if(coord_index != num_coords-1)
 		{
 			Coord nextCoord;
 			nextCoord = coords[coord_index+1];
+
+			// calculate and turn angle to next vector
 			Coord nextCoordAdj;
 			nextCoordAdj.x = nextCoord.x-curCoord.x;
 			nextCoordAdj.y = nextCoord.y-curCoord.y;
+
 			int angleToTurn = calcAngle(nextCoord, nextCoordAdj)*180/PI;
+
 			// FOR TESTING ONLY
 			turnInPlace(angleToTurn, 20);
 
