@@ -22,6 +22,14 @@ Sensor Ports:
 */
 
 #include "PC_FileIO.c";
+
+typedef struct
+{
+	int x;
+	int y;
+
+} Coord;
+
 void configureAllSensors();
 void selectMode(bool &mode);
 
@@ -41,9 +49,9 @@ void turnInPlace(int angle, int mot_pow);
 void followLine(); // Sean
 
 void followPathFromFile(); // Andor
-int getCoordsFromFile(int* coordsX, int* coordsY);
-float calcLength(int curX, int curY, int prevX, int prevY);
-float calcAngle(int curX, int curY, int prevX, int prevY);
+int getCoordsFromFile(Coord* coords);
+float calcLength(Coord nextCoord, Coord curCoord);
+float calcAngle(Coord nextCoord, Coord curCoord);
 
 // calculation functions
 int distToDeg(float dist);
@@ -52,7 +60,7 @@ float degToDist(int deg);
 // constants
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
-const int MAX_COORDS = 100;
+const int MAX_COORDS = 50;
 const int PIXELS_PER_CM = 15;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const int DOOR_ANG = 90; // degrees
@@ -97,42 +105,48 @@ void followLine()
 void followPathFromFile()
 {
 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
-	int coordsX[MAX_COORDS];
-	int coordsY[MAX_COORDS];
-	int num_coords = getCoordsFromFile(coordsX, coordsY);
+	Coord coords[MAX_COORDS];
+	int num_coords = getCoordsFromFile(coords);
 
 	// drive to first coord and turn
-	float first_length = sqrt(pow(coordsX[0],2) + pow(coordsY[0],2))/PIXELS_PER_CM;
-	int first_angle = atan2(coordsY[0], coordsX[0])*180/PI;
+	float first_length = sqrt(pow(coords[0].x,2) + pow(coords[0].y,2))/PIXELS_PER_CM;
+	int first_angle = atan2(coords[0].y, coords[0].x)*180/PI;
 
 	turnInPlace(first_angle, 20);
 	driveDist(50, first_length);
 
 	// turn towards second point
-	turnInPlace(calcAngle(coordsX[1], coordsY[1], coordsX[1]-coordsX[0], coordsY[1]-coordsY[0]), 20);
+	Coord point2adjusted;
+	point2adjusted.x = coords[1].x-coords[0].x;
+	point2adjusted.y = coords[1].y-coords[0].y;
+	turnInPlace(calcAngle(coords[1], point2adjusted), 20);
 
-	int prevX = coordsX[1];
-	int prevY = coordsY[1];
+	Coord curCoord = coords[1];
 
 	for(int coord_index = 0; coord_index < num_coords; num_coords++)
 	{
-		float drive_length = calcLength(coordsX[coord_index], coordsY[coord_index], prevX, prevY)/PIXELS_PER_CM;
+		float drive_length = calcLength(coords[coord_index], curCoord)/PIXELS_PER_CM;
 		// FOR TESTING ONLY
 		driveDist(50, drive_length);
-		if(coord_index != num_coords)
+		if(coord_index != num_coords-1)
 		{
-			int angleToTurn = calcAngle(coordsX[coord_index+1], coordsY[coord_index+1], coordsX[coord_index+1]-coordsX[coord_index], coordsY[coord_index+1]-coordsY[coord_index])*180/PI;
+			Coord nextCoord = coords[coord_index+1];
+			Coord nextCoordAdj;
+			nextCoordAdj.x = nextCoord.x-curCoord.x;
+			nextCoordAdj.y = nextCoord.y-curCoord.y;
+			int angleToTurn = calcAngle(nextCoord, nextCoordAdj)*180/PI;
 			// FOR TESTING ONLY
 			turnInPlace(angleToTurn, 20);
+
+			// update current point
+			curCoord = nextCoord;
 		}
 
-		prevX = coordsX[coord_index+1]; // CHECK THIS
-		prevY = coordsY[coord_index+1];
 	}
 
 }
 
-int getCoordsFromFile(int* coordsX, int* coordsY)
+int getCoordsFromFile(Coord* coords)
 {
 	TFileHandle fin;
 	bool fileOkay = openReadPC(fin,"drive_coords.txt");
@@ -147,22 +161,22 @@ int getCoordsFromFile(int* coordsX, int* coordsY)
 	{
 		readIntPC(fin, tempX);
 		readIntPC(fin, tempY);
-		coordsX[read_index] = tempX;
-		coordsY[read_index] = tempY;
+		coords[read_index].x = tempX;
+		coords[read_index].y = tempY;
 	}
 
 	closeFilePC(fin);
 	return num_coords;
 }
 
-float calcLength(int curX, int curY, int prevX, int prevY)
+float calcLength(Coord nextCoord, Coord curCoord)
 {
-	return sqrt(pow(curX-prevX,2) + pow(curY-prevY, 2));
+	return sqrt(pow(nextCoord.x-curCoord.x,2) + pow(nextCoord.y-curCoord.y, 2));
 }
 
-float calcAngle(int curX, int curY, int prevX, int prevY)
+float calcAngle(Coord nextCoord, Coord curCoord)
 {
-	return asin((curY*prevX - curX*prevY)/(pow(prevX, 2)+ pow(prevY, 2)));
+	return asin((nextCoord.y*curCoord.x - nextCoord.x*curCoord.y)/(pow(curCoord.x, 2)+ pow(curCoord.y, 2)));
 }
 
 void configureAllSensors()
@@ -246,8 +260,8 @@ void turnInPlace(int angle, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-//Josh - takes motor power, a distance in encoded degrees and the gyro sensor port.
-//moves forward, turns 180 degrees, moves forward again to knock down first domino.
+// Josh - takes motor power, a distance in encoded degrees and the gyro sensor port.
+// moves forward, turns 180 degrees, moves forward again to knock down first domino.
 void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in functions
 {
 	nMotorEncoder[LEFT_MOT_PORT] = 0;
