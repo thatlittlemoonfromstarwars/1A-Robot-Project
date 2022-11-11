@@ -40,8 +40,8 @@ int distToDeg(float dist);
 // constants
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
-const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
-const int DOOR_SIZE = 170; // degrees
+const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
+const int DOOR_SIZE = 90; // degrees
 const int DOOR_SPEED = 10;
 
 const int TOUCH_PORT = S3;
@@ -55,6 +55,7 @@ task main()
 
 	// initialization for domino dropping
 	nMotorEncoder(motorC)=0;
+	nMotorEncoder(motorB)=0;
 	int dropIndex = 0;
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
 
@@ -130,7 +131,7 @@ void setDriveTrainSpeed(int speed)
 // Henrique's functions
 void openDoor()
 {
-	nMotorEncoder(motorB) = 0;
+
 	motor[motorB] = DOOR_SPEED;
 	while (nMotorEncoder(motorB)<DOOR_SIZE)
 	{}
@@ -162,7 +163,7 @@ void dropDomino(int &dropIndex, int &dominoCount)
 	else if (dropIndex == 1)
 	{
 		motor[motorC] = -15;
-		while (nMotorEncoder(motorC) > -500)
+		while (nMotorEncoder(motorC) > -550)
 		{}
 		motor[motorC]= 0;
 
@@ -170,7 +171,7 @@ void dropDomino(int &dropIndex, int &dominoCount)
 		wait1Msec(100);
 
 		motor[motorC] = 15;
-		while (nMotorEncoder(motorC) < 20)
+		while (nMotorEncoder(motorC) < 100)
 		{}
 		motor[motorC] = 0;
 	}
