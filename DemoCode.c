@@ -124,15 +124,15 @@ int distToDeg(float dist)
 
 void setDriveTrainSpeed(int speed)
 {
-	motor[motorA] = motor[motorD] = speed;
+	motor[motorA] = motor[motorD] = -1*speed;
 }
 
 // Henrique's functions
 void openDoor()
 {
 	nMotorEncoder(motorC) = 0;
-	motor[motorC] = DOOR_SPEED;
-	while (nMotorEncoder(motorC)<DOOR_SIZE)
+	motor[motorC] = -1*DOOR_SPEED;
+	while (nMotorEncoder(motorC)>-1*DOOR_SIZE)
 	{}
 	motor[motorC] = 0;
 
@@ -141,8 +141,8 @@ void openDoor()
 
 void closeDoor()
 {
-	motor[motorC] = -1*DOOR_SPEED;
-	while (nMotorEncoder(motorC)>5)
+	motor[motorC] = DOOR_SPEED;
+	while (nMotorEncoder(motorC)<-5)
 	{}
 	motor[motorC] = 0;
 
@@ -153,22 +153,22 @@ void dropDomino(int &dropIndex, int &dominoCount)
 {
 	if (dropIndex == 0)
 	{
-		motor[motorB] = -15;
-		while (nMotorEncoder(motorB) > -325)
+		motor[motorB] = 15;
+		while (nMotorEncoder(motorB) < 325)
 		{}
 		motor[motorB] = 0;
 		dropIndex += 1;
 	}
 	if (dropIndex == 1)
 	{
-		motor[motorB] = -15;
-		while (nMotorEncoder(motorB) > -500)
+		motor[motorB] = 15;
+		while (nMotorEncoder(motorB) < 500)
 		{}
 		motor[motorB]= 0;
 		dropIndex = 0;
 		wait1Msec(100);
-		motor[motorB] = 15;
-		while (nMotorEncoder(motorB) < 20)
+		motor[motorB] = -15;
+		while (nMotorEncoder(motorB) > -20)
 		{}
 		motor[motorB] = 0;
 	}
