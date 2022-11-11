@@ -214,6 +214,27 @@ void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoC
 
 }
 
+void turnInPlace(int angle, int mot_pow)
+{
+	int initialGyro = getGyroDegrees(GYRO_PORT);
+	if(angle < 0)
+	{
+		motor[motorA] = mot_pow;
+		motor[motorB] = -1*mot_pow;
+		while(getGyroDegrees(GYRO_PORT) > initialGyro-angle)
+		{}
+	}
+	else if(angle > 0)
+	{
+		motor[motorA] = -1*mot_pow;
+		motor[motorB] = mot_pow;
+		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
+		{}
+	}
+
+	setDriveTrainSpeed(0);
+}
+
 //Josh - takes motor power, a distance in encoded degrees and the gyro sensor port.
 //moves forward, turns 180 degrees, moves forward again to knock down first domino.
 void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in functions
@@ -259,12 +280,6 @@ void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 	}
 	ev3StopSound();
 	motor[motorA] = motor[motorD] = motor_power;
-}
-
-void followPathFromFile()
-{
-	// assumes robot starts on top left of domino placement area, facing right
-
 }
 
 int distToDeg(float dist)
