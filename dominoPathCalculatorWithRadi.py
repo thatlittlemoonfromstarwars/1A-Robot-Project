@@ -1,8 +1,12 @@
 # from https://stackoverflow.com/questions/19780411/pygame-drawing-a-rectangle
 
 # to draw rectangle
-import pygame, sys, math
+import math
+import sys
+
+import pygame
 from pygame.locals import *
+
 
 class Point:
 
