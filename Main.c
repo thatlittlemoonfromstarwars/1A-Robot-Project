@@ -59,7 +59,8 @@ const int DOOR_SIZE = 170; // degrees
 const int DOOR_SPEED = 75;
 const int TOUCH_PORT = S3;
 const int GYRO_PORT = S2;
-const int COLOR_PORT = S1;
+//const int COLOR_PORT1 =    multiplexer needs to be researched more
+//const int COLOR_PORT2 =
 const int ULTRASONIC_PORT = S4;
 
 task main()
@@ -83,7 +84,10 @@ task main()
 
 void followLine()
 {
+	while(dominoCount>0)
+	{
 
+	}
 }
 
 void followPathFromFile()
