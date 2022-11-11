@@ -54,9 +54,10 @@ const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 60;
 const int MAX_COORDS = 100;
 const int PIXELS_PER_CM = 15;
-const float DIST_BETWEEN_DOMINOS = 3.6; // in cm
-const int DOOR_SIZE = 170; // degrees
-const int DOOR_SPEED = 75;
+const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
+const int DOOR_ANG = 90; // degrees
+const int DOOR_SPEED = 10;
+
 const int TOUCH_PORT = S3;
 const int GYRO_PORT = S2;
 const int COLOR_PORT = S1;
@@ -66,9 +67,11 @@ task main()
 {
 	configureAllSensors();
 	// initialization for domino dropping
+	nMotorEncoder(motorC)=0;
 	nMotorEncoder(motorB)=0;
 	int dropIndex = 0;
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
+
 	bool mode = false; // false for line follow, true for file path
 	selectMode(mode);
 	if(mode)
@@ -297,27 +300,26 @@ float degToDist(int deg)
 
 void setDriveTrainSpeed(int speed)
 {
-	motor[motorA] = motor[motorD] = speed;
+	motor[motorA] = motor[motorD] = -1*speed;
 }
 
 // Henrique's functions
 void openDoor()
 {
-	nMotorEncoder(motorC) = 0;
-	motor[motorC] = DOOR_SPEED;
-	while (nMotorEncoder(motorC)<DOOR_SIZE)
+	motor[motorB] = DOOR_SPEED;
+	while (nMotorEncoder(motorB)<DOOR_ANG)
 	{}
-	motor[motorC] = 0;
+	motor[motorB] = 0;
 
 	return;
 }
 
 void closeDoor()
 {
-	motor[motorC] = -1*DOOR_SPEED;
-	while (nMotorEncoder(motorC)>5)
+	motor[motorB] = -1*DOOR_SPEED;
+	while (nMotorEncoder(motorB)>5)
 	{}
-	motor[motorC] = 0;
+	motor[motorB] = 0;
 
 	return;
 }
@@ -326,33 +328,28 @@ void dropDomino(int &dropIndex, int &dominoCount)
 {
 	if (dropIndex == 0)
 	{
-		motor[motorB] = 15;
-		while (nMotorEncoder(motorB)<130)
+		motor[motorC] = -15;
+		while (nMotorEncoder(motorC) > -325)
 		{}
-		motor[motorB] = 0;
+		motor[motorC] = 0;
 		dropIndex += 1;
 	}
-	if (dropIndex == 1)
+	else if (dropIndex == 1)
 	{
-		motor[motorB] = 15;
-		while (nMotorEncoder(motorB)<160)
+		motor[motorC] = -15;
+		while (nMotorEncoder(motorC) > -550)
 		{}
-		motor[motorB]= 0;
-		dropIndex += 1;
-	}
+		motor[motorC]= 0;
 
-	if (dropIndex == 2)
-	{
-		motor[motorB] = 15;
-		while (nMotorEncoder(motorB)<220)
-		{}
-		motor[motorB] = 0;
+		dropIndex = 0;
 		wait1Msec(100);
-		motor[motorB] = -15;
-		while (nMotorEncoder(motorB)<0)
+
+		motor[motorC] = 15;
+		while (nMotorEncoder(motorC) < 100)
 		{}
-		motor[motorB] = 0;
+		motor[motorC] = 0;
 	}
+	wait1Msec(700);
 	openDoor();
 	dominoCount--;
 	driveDist(15, DIST_BETWEEN_DOMINOS);
