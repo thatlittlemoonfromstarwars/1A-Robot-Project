@@ -1,6 +1,5 @@
 #include "mindsensors-ev3smux.h"
 
-
 void configureAllSensors();
 
 const int PISTON_POWER = 15;
@@ -11,7 +10,7 @@ const int DOOR_POWER = 25;
 const int DOOR_UP_LIMIT = 100;
 const int DOOR_DOWN_LIMIT = 0;
 const int DRIVE_CODE_POWER = -25;
-const int COLOR_SENSOR_PORT = 1
+const int dominoCount = 30;
 //const string PUSH_MOTOR = "motorC"; //change type
 //const string DOOR_MOTOR = "motorB"; //change type
 
@@ -32,25 +31,30 @@ void configureAllSensors()
 	wait1Msec(50);
 }
 
-void configureLineFollower()
+int followLine()
 {
-	tMSEV3 muxedSensor[2];
+	while(dominoCount>0)
+	{
+		motor[MotorA] = motor[motorD] = 10;
 
-	tEV3SensorTypeMode typeMode[2] = {colorMeasureColor, colorMeasureColor};
-
-	case colorMeasureColor:
-		displayTextLine(i*2, "Chan[%d]: Color", i+1);
-		displayTextLine(i*2 + 1, "Color: %d", muxedSensor[i].color);
-		break;
-
-	case colorMeasureColor:
-		displayTextLine(i*2, "Chan[%d]: Color", i+1);
-		displayTextLine(i*2 + 1, "Color: %d", muxedSensor[i].color);
-			break;
+		if(SensorValue[S3]==1)
+		{
+			return 1;
+		}
+		while(SensorValue[msensor_S1_1]==(int)colorBlack)
+		{
+			motor[motorA]= 0;
+		}
+		motor[MotorA] = motor[motorD] = 10;
+		while(SensorValue[msensor_S1_2]==(int)colorBlack)
+		{
+			motor[motorD] = 0;
+		}
+		motor[MotorA] = motor[motorD] = 10;
+	}
 }
 
 task main()
 {
-
 
 }
