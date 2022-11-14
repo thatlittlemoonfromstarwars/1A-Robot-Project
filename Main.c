@@ -308,7 +308,7 @@ void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 	while(SensorValue[ULTRASONIC_PORT] < max_dist)
 	{
 		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
-		// TODO find function to clear display
+		eraseDisplay();
 		displayString(5, "Please clear path ahead");
 		playSound(soundBeepBeep); // can change later
 	}
