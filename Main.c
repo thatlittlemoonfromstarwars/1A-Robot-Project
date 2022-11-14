@@ -144,6 +144,8 @@ void followPathFromFile()
 
 			// FOR TESTING ONLY
 			turnInPlace(angleToTurn, 20);
+			// https://math.stackexchange.com/questions/405024/determine-center-of-circle-if-radius-and-2-tangent-line-segments-are-given
+
 
 			// update current point
 			curCoord = nextCoord;
