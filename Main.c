@@ -30,33 +30,31 @@ typedef struct
 
 } Coord;
 
+// initialization functions
 void configureAllSensors();
 bool selectMode();
-
-// movement functions
-void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
-void openDoor();
-void closeDoor();
-
-void stopAndKnock(int motor_power, int enc_limit); // Josh
-void somethingInTheWay(); // stops and informs the user to move the object in the way
-
-void driveDist(int mot_pow, float dist);
-//void driveDistWhileDispensing(int mot_pow, float dist, bool &dropIndex, int &dominoCount);
-void setDriveTrainSpeed(int speed);
-void turnInPlace(int angle, int mot_pow);
-
-void followLine(bool &dropIndex, int &dominoCount); // Sean
-
-void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
-int getCoordsFromFile(Coord* coords);
-float calcLength(Coord nextCoord, Coord curCoord);
-float calcAngle(Coord nextCoord, Coord curCoord);
 void endProgram();
 
+// high level functions
+void followLine(bool &dropIndex, int &dominoCount); // Sean
+void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
+int getCoordsFromFile(Coord* coords);
+void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
+void somethingInTheWay(); // stops and informs the user to move the object in the way
+
 // calculation functions
+float calcLength(Coord nextCoord, Coord curCoord);
+float calcAngle(Coord nextCoord, Coord curCoord);
 int distToDeg(float dist);
 float degToDist(int deg);
+
+// movement functions
+void setDriveTrainSpeed(int speed);
+void driveDist(int mot_pow, float dist);
+void turnInPlace(int angle, int mot_pow);
+void stopAndKnock(int motor_power, int enc_limit); // Josh
+void openDoor();
+void closeDoor();
 
 // constants
 const float WHEEL_RAD = 2.75; // in cm
@@ -98,12 +96,65 @@ task main()
 	}
 }
 
-void followLine(bool &dropIndex, int &dominoCount)
+// initialization functions
+void configureAllSensors()
+{
+	SensorType[TOUCH_PORT] = sensorEV3_Touch;
+	SensorType[GYRO_PORT] = sensorEV3_Gyro;
+	wait1Msec(50);
+	SensorType[COLOR_PORT] = sensorEV3_Color;
+	wait1Msec(50);
+	SensorType[ULTRASONIC_PORT] = sensorEV3_Ultrasonic;
+	wait1Msec(50);
+	SensorMode[GYRO_PORT] = modeEV3Gyro_Calibration;
+	wait1Msec(50);
+	SensorMode[COLOR_PORT] = modeEV3Color_Color;
+	wait1Msec(100);
+	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
+	wait1Msec(50);
+}
+
+bool selectMode()
+{
+	displayBigTextLine(5, "Choose Mode");
+	displayBigTextLine(7, "Left - Follow Line");
+	displayBigTextLine(9, "Right - Follow Path from File");
+
+	bool mode = false;
+
+	while(!getButtonPress(buttonLeft) && !getButtonPress(buttonRight))
+	{}
+
+	if(getButtonPress(buttonLeft))
+	{
+		mode = false;
+	}
+	else if(getButtonPress(buttonRight))
+	{
+		mode = true;
+	}
+	return mode;
+
+}
+
+void endProgram()
+{
+	setDriveTrainSpeed(0);
+	time1[T1] = 0;
+	while(time1[T1] < TIME_TO_PRESS*1000)
+	{
+		if(SensorValue[TOUCH_PORT])
+			stopAndKnock();
+	}
+}
+
+// high level functions
+void followLine(bool &dropIndex, int &dominoCount) // Sean
 {
 
 }
 
-void followPathFromFile(bool &dropIndex, int &dominoCount)
+void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 {
 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
 	Coord coords[MAX_COORDS];
@@ -189,7 +240,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount)
 	endProgram();
 }
 
-int getCoordsFromFile(Coord* coords)
+int getCoordsFromFile(Coord* coords) // Andor
 {
 	TFileHandle fin;
 	bool fileOkay = openReadPC(fin,"drive_coords.txt");
@@ -212,196 +263,7 @@ int getCoordsFromFile(Coord* coords)
 	return num_coords;
 }
 
-float calcLength(Coord nextCoord, Coord curCoord)
-{
-	return sqrt(pow(nextCoord.x-curCoord.x,2) + pow(nextCoord.y-curCoord.y, 2));
-}
-
-float calcAngle(Coord nextCoord, Coord curCoord)
-{
-	return asin((nextCoord.y*curCoord.x - nextCoord.x*curCoord.y)/(pow(curCoord.x, 2)+ pow(curCoord.y, 2)));
-}
-
-void configureAllSensors()
-{
-	SensorType[TOUCH_PORT] = sensorEV3_Touch;
-	SensorType[GYRO_PORT] = sensorEV3_Gyro;
-	wait1Msec(50);
-	SensorType[COLOR_PORT] = sensorEV3_Color;
-	wait1Msec(50);
-	SensorType[ULTRASONIC_PORT] = sensorEV3_Ultrasonic;
-	wait1Msec(50);
-	SensorMode[GYRO_PORT] = modeEV3Gyro_Calibration;
-	wait1Msec(50);
-	SensorMode[COLOR_PORT] = modeEV3Color_Color;
-	wait1Msec(100);
-	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
-	wait1Msec(50);
-}
-
-bool selectMode()
-{
-	displayBigTextLine(5, "Choose Mode");
-	displayBigTextLine(7, "Left - Follow Line");
-	displayBigTextLine(9, "Right - Follow Path from File");
-
-	bool mode = false;
-
-	while(!getButtonPress(buttonLeft) && !getButtonPress(buttonRight))
-	{}
-
-	if(getButtonPress(buttonLeft))
-	{
-		mode = false;
-	}
-	else if(getButtonPress(buttonRight))
-	{
-		mode = true;
-	}
-	return mode;
-
-}
-
-void driveDist(int mot_pow, float dist) // input negative motor power for backwards
-{
-	setDriveTrainSpeed(mot_pow);
-	nMotorEncoder[LEFT_MOT_PORT] = 0;
-	while(abs(nMotorEncoder[LEFT_MOT_PORT]) < distToDeg(dist))
-	{}
-	setDriveTrainSpeed(0);
-}
-
-/*
-void driveDistWhileDispensing(int mot_pow, int dist, bool &dropIndex,int &dominoCount)
-{
-	nMotorEncoder[RIGHT_MOT_PORT] = 0;
-	while(abs(nMotorEncoder[RIGHT_MOT_PORT]) < distToDeg(dist))
-	{
-		if(dominoCount == 0)
-		{
-			// TODO
-		}
-		dropDomino(dropIndex, dominoCount);
-	}
-
-}
-*/
-
-void turnInPlace(int angle, int mot_pow)
-{
-	int initialGyro = getGyroDegrees(GYRO_PORT);
-	if(angle < 0)
-	{
-		motor[LEFT_MOT_PORT] = mot_pow;
-		motor[DOOR_MOT_PORT] = -1*mot_pow;
-		while(getGyroDegrees(GYRO_PORT) > initialGyro-angle)
-		{}
-	}
-	else if(angle > 0)
-	{
-		motor[LEFT_MOT_PORT] = -1*mot_pow;
-		motor[DOOR_MOT_PORT] = mot_pow;
-		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
-		{}
-	}
-
-	setDriveTrainSpeed(0);
-}
-
-// Josh - takes motor power, a distance in encoded degrees and the gyro sensor port.
-// moves forward, turns 180 degrees, moves forward again to knock down first domino.
-void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in functions
-{
-	nMotorEncoder[LEFT_MOT_PORT] = 0;
-	setDriveTrainSpeed(motor_power);
-
-	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
-	{}
-
-	setDriveTrainSpeed(0);
-
-	resetGyro(GYRO_PORT);
-
-	motor[LEFT_MOT_PORT] = motor_power;
-	motor[RIGHT_MOT_PORT] = -1*motor_power;
-
-	while(getGyroDegrees(GYRO_PORT) < 180)
-	{}
-
-	nMotorEncoder[LEFT_MOT_PORT] = 0;
-
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
-
-	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
-	{}
-
-	setDriveTrainSpeed(0);
-
-}
-
-//Josh - takes UltraSonic sensor port, max distance from an object and motor power.
-//Stops motors, displays message and plays a sound. continues when object is moved.
-void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
-{
-	while(SensorValue[ULTRASONIC_PORT] < max_dist)
-	{
-		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
-		eraseDisplay();
-		displayString(5, "Please clear path ahead");
-		playSound(soundBeepBeep); // can change later
-	}
-	ev3StopSound();
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
-}
-
-void endProgram()
-{
-	setDriveTrainSpeed(0);
-	time1[T1] = 0;
-	while(time1[T1] < TIME_TO_PRESS*1000)
-	{
-		if(SensorValue[TOUCH_PORT])
-			stopAndKnock();
-	}
-}
-
-int distToDeg(float dist)
-{
-	return dist*180/PI/WHEEL_RAD;
-}
-
-float degToDist(int deg)
-{
-	return deg*PI*WHEEL_RAD/180;
-}
-
-void setDriveTrainSpeed(int speed)
-{
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -1*speed;
-}
-
-// Henrique's functions
-void openDoor()
-{
-	motor[DOOR_MOT_PORT] = DOOR_SPEED;
-	while (nMotorEncoder(DOOR_MOT_PORT)<DOOR_ANG)
-	{}
-	motor[DOOR_MOT_PORT] = 0;
-}
-
-void closeDoor()
-{
-	if(!nMotorEncoder(DOOR_MOT_PORT)<5)
-	{
-		motor[DOOR_MOT_PORT] = -1*DOOR_SPEED;
-		while (nMotorEncoder(DOOR_MOT_PORT)>5)
-		{}
-		motor[DOOR_MOT_PORT] = 0;
-	}
-}
-
-void dropDomino(bool &dropIndex, int &dominoCount)
+void dropDomino(bool &dropIndex, int &dominoCount) // Henrique
 {
 	setDriveTrainSpeed(0);
 	closeDoor();
@@ -432,4 +294,128 @@ void dropDomino(bool &dropIndex, int &dominoCount)
 	openDoor();
 	dominoCount--;
 	// continue line or path follow after
+}
+
+void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power) // Josh
+{
+	// takes UltraSonic sensor port, max distance from an object and motor power.
+	// Stops motors, displays message and plays a sound. continues when object is moved.
+	while(SensorValue[ULTRASONIC_PORT] < max_dist)
+	{
+		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
+		eraseDisplay();
+		displayString(5, "Please clear path ahead");
+		playSound(soundBeepBeep); // can change later
+	}
+	ev3StopSound();
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
+}
+
+// calculation functions
+float calcLength(Coord nextCoord, Coord curCoord)
+{
+	return sqrt(pow(nextCoord.x-curCoord.x,2) + pow(nextCoord.y-curCoord.y, 2));
+}
+
+float calcAngle(Coord nextCoord, Coord curCoord)
+{
+	return asin((nextCoord.y*curCoord.x - nextCoord.x*curCoord.y)/(pow(curCoord.x, 2)+ pow(curCoord.y, 2)));
+}
+
+int distToDeg(float dist)
+{
+	return dist*180/PI/WHEEL_RAD;
+}
+
+float degToDist(int deg)
+{
+	return deg*PI*WHEEL_RAD/180;
+}
+
+// movement functions
+void setDriveTrainSpeed(int speed)
+{
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -1*speed;
+}
+
+void driveDist(int mot_pow, float dist) 
+{
+	// input negative motor power for backwards
+	setDriveTrainSpeed(mot_pow);
+	nMotorEncoder[LEFT_MOT_PORT] = 0;
+	while(abs(nMotorEncoder[LEFT_MOT_PORT]) < distToDeg(dist))
+	{}
+	setDriveTrainSpeed(0);
+}
+
+void turnInPlace(int angle, int mot_pow)
+{
+	int initialGyro = getGyroDegrees(GYRO_PORT);
+	if(angle < 0)
+	{
+		motor[LEFT_MOT_PORT] = mot_pow;
+		motor[DOOR_MOT_PORT] = -1*mot_pow;
+		while(getGyroDegrees(GYRO_PORT) > initialGyro-angle)
+		{}
+	}
+	else if(angle > 0)
+	{
+		motor[LEFT_MOT_PORT] = -1*mot_pow;
+		motor[DOOR_MOT_PORT] = mot_pow;
+		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
+		{}
+	}
+
+	setDriveTrainSpeed(0);
+}
+
+void stopAndKnock (int motor_power, int enc_limit) // Josh
+{
+	// takes motor power, a distance in encoded degrees and the gyro sensor port.
+	// moves forward, turns 180 degrees, moves forward again to knock down first domino.
+	nMotorEncoder[LEFT_MOT_PORT] = 0;
+	setDriveTrainSpeed(motor_power);
+
+	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
+	{}
+
+	setDriveTrainSpeed(0);
+
+	resetGyro(GYRO_PORT);
+
+	motor[LEFT_MOT_PORT] = motor_power;
+	motor[RIGHT_MOT_PORT] = -1*motor_power;
+
+	while(getGyroDegrees(GYRO_PORT) < 180)
+	{}
+
+	nMotorEncoder[LEFT_MOT_PORT] = 0;
+
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
+	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
+
+	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
+	{}
+
+	setDriveTrainSpeed(0);
+
+}
+
+void openDoor() // Henrique
+{
+	motor[DOOR_MOT_PORT] = DOOR_SPEED;
+	while (nMotorEncoder(DOOR_MOT_PORT)<DOOR_ANG)
+	{}
+	motor[DOOR_MOT_PORT] = 0;
+}
+
+void closeDoor() // Henrique
+{
+	if(!nMotorEncoder(DOOR_MOT_PORT)<5)
+	{
+		motor[DOOR_MOT_PORT] = -1*DOOR_SPEED;
+		while (nMotorEncoder(DOOR_MOT_PORT)>5)
+		{}
+		motor[DOOR_MOT_PORT] = 0;
+	}
 }
