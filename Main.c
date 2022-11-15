@@ -42,13 +42,13 @@ void stopAndKnock(int motor_power, int enc_limit); // Josh
 void somethingInTheWay(); // stops and informs the user to move the object in the way
 
 void driveDist(int mot_pow, float dist);
-void driveDistWhileDispensing(int mot_pow, float dist, bool &dropIndex, int &dominoCount);
+//void driveDistWhileDispensing(int mot_pow, float dist, bool &dropIndex, int &dominoCount);
 void setDriveTrainSpeed(int speed);
 void turnInPlace(int angle, int mot_pow);
 
-void followLine(); // Sean
+void followLine(bool &dropIndex, int &dominoCount); // Sean
 
-void followPathFromFile(); // Andor
+void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
 int getCoordsFromFile(Coord* coords);
 float calcLength(Coord nextCoord, Coord curCoord);
 float calcAngle(Coord nextCoord, Coord curCoord);
@@ -80,27 +80,27 @@ task main()
 {
 	configureAllSensors();
 	// initialization for domino dropping
-	nMotorEncoder(DISPENSER_MOT_PORT)=0;
-	nMotorEncoder(DOOR_MOT_PORT)=0;
+	nMotorEncoder(DISPENSER_MOT_PORT) = 0;
+	nMotorEncoder(DOOR_MOT_PORT) = 0;
 	bool dropIndex = 0;
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
-
+	wait1Msec(5000);
 	if(selectMode())// false for line follow, true for file path
 	{
-		followLine();
+		followLine(dropIndex, dominoCount);
 	}
 	else
 	{
-		followPathFromFile();
+		followPathFromFile(dropIndex, dominoCount);
 	}
 }
 
-void followLine()
+void followLine(bool &dropIndex, int &dominoCount)
 {
 
 }
 
-void followPathFromFile()
+void followPathFromFile(bool &dropIndex, int &dominoCount)
 {
 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
 	Coord coords[MAX_COORDS];
@@ -123,7 +123,8 @@ void followPathFromFile()
 	Coord curCoord;
 	curCoord = coords[1];
 
-	for(int coord_index = 0; coord_index < num_coords; num_coords++)
+	int coord_index = 0;
+	while(coord_index < num_coords && dominoCount > 0)
 	{
 		// do calculations
 		float drive_length = calcLength(coords[coord_index], curCoord)/PIXELS_PER_CM;
@@ -157,15 +158,17 @@ void followPathFromFile()
 		setDriveTrainSpeed(50);
 		while(abs(nMotorEncoder(LEFT_MOT_PORT)) < drive_length)
 		{
-			if(abs(nMotorEncoder(LEFT_MOT_PORT))%DIST_BETWEEN_DOMINOS == 0)
+			if(((int)degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)DIST_BETWEEN_DOMINOS*100) == 0)
 			{
-				dropDomino();
+				dropDomino(dropIndex, dominoCount);
 				setDriveTrainSpeed(50);
 			}
 		}
 
 		// start turn
+		// use motor encoder and arc length
 
+		coord_index++;
 	}
 
 }
@@ -242,7 +245,7 @@ bool selectMode()
 	return mode;
 
 }
-/*
+
 void driveDist(int mot_pow, float dist) // input negative motor power for backwards
 {
 	setDriveTrainSpeed(mot_pow);
@@ -252,6 +255,7 @@ void driveDist(int mot_pow, float dist) // input negative motor power for backwa
 	setDriveTrainSpeed(0);
 }
 
+/*
 void driveDistWhileDispensing(int mot_pow, int dist, bool &dropIndex,int &dominoCount)
 {
 	nMotorEncoder[RIGHT_MOT_PORT] = 0;
