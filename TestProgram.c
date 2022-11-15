@@ -1,4 +1,5 @@
 #include "mindsensors-ev3smux.h"
+#include "UW_sensorMux.c"
 
 void configureAllSensors();
 
@@ -25,8 +26,12 @@ void configureAllSensors()
 	wait1Msec(50);
 	SensorMode[S2] = modeEV3Gyro_Calibration;
 	wait1Msec(50);
-//	SensorMode[S1] = modeEV3Color_Color;
-//	wait1Msec(100);
+	SensorType[S1] = sensorEV3_GenericI2C;
+	wait1Msec(100);
+	if (!initSensorMux(msensor_S1_1, colorMeasureColor))
+		return;
+	if (!initSensorMux(msensor_S1_2, colorMeasureColor))
+		return;
 	SensorMode[S2] = modeEV3Gyro_RateAndAngle;
 	wait1Msec(50);
 }
