@@ -40,7 +40,7 @@ void followLine(bool &dropIndex, int &dominoCount); // Sean
 void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
 int getCoordsFromFile(Coord* coords);
 void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
-void somethingInTheWay(int ULTRASONIC_PORT, float max_dist, int motor_power); // stops and informs the user to move the object in the way
+void somethingInTheWay(int motor_power); // stops and informs the user to move the object in the way
 
 // calculation functions
 float calcLength(Coord nextCoord, Coord curCoord);
@@ -52,7 +52,7 @@ float degToDist(int deg);
 void setDriveTrainSpeed(int speed);
 void driveDist(int mot_pow, float dist);
 void turnInPlace(int angle, int mot_pow);
-void stopAndKnock(int motor_power, int enc_limit); // Josh
+void stopAndKnock(); // Josh
 void openDoor();
 void closeDoor();
 
@@ -221,7 +221,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 			}
 			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
 			{
-				somethingInTheWay();
+				somethingInTheWay(50);
 			}
 
 			// drop domino every DIST_BETWEEN_DOMINOS
@@ -296,11 +296,11 @@ void dropDomino(bool &dropIndex, int &dominoCount) // Henrique
 	// continue line or path follow after
 }
 
-void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power) // Josh
+void somethingInTheWay (int motor_power) // Josh
 {
 	// takes UltraSonic sensor port, max distance from an object and motor power.
 	// Stops motors, displays message and plays a sound. continues when object is moved.
-	while(SensorValue[ULTRASONIC_PORT] < max_dist)
+	while(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
 	{
 		setDriveTrainSpeed(0);
 		eraseDisplay();
@@ -369,12 +369,16 @@ void turnInPlace(int angle, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-void stopAndKnock (int motor_power, int enc_limit) // Josh
+void stopAndKnock () // Josh
 {
+	// TODO fix this to just reverse, not turn
+
 	// takes motor power, a distance in encoded degrees and the gyro sensor port.
 	// moves forward, turns 180 degrees, moves forward again to knock down first domino.
+	int enc_limit = DIST_BETWEEN_DOMINOS;
+	int motor_power = 50;
 	nMotorEncoder[LEFT_MOT_PORT] = 0;
-	setDriveTrainSpeed(motor_power);
+	setDriveTrainSpeed(-1*motor_power);
 
 	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
 	{}
