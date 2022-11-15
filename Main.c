@@ -40,7 +40,7 @@ void followLine(bool &dropIndex, int &dominoCount); // Sean
 void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
 int getCoordsFromFile(Coord* coords);
 void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
-void somethingInTheWay(); // stops and informs the user to move the object in the way
+void somethingInTheWay(int ULTRASONIC_PORT, float max_dist, int motor_power); // stops and informs the user to move the object in the way
 
 // calculation functions
 float calcLength(Coord nextCoord, Coord curCoord);
@@ -302,13 +302,13 @@ void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power) //
 	// Stops motors, displays message and plays a sound. continues when object is moved.
 	while(SensorValue[ULTRASONIC_PORT] < max_dist)
 	{
-		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
+		setDriveTrainSpeed(0);
 		eraseDisplay();
 		displayString(5, "Please clear path ahead");
 		playSound(soundBeepBeep); // can change later
 	}
 	ev3StopSound();
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
+	setDriveTrainSpeed(motor_power);
 }
 
 // calculation functions
@@ -338,7 +338,7 @@ void setDriveTrainSpeed(int speed)
 	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -1*speed;
 }
 
-void driveDist(int mot_pow, float dist) 
+void driveDist(int mot_pow, float dist)
 {
 	// input negative motor power for backwards
 	setDriveTrainSpeed(mot_pow);
