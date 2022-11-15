@@ -91,6 +91,15 @@ def doIntersect(p1,q1,p2,q2):
 def dot(vA, vB):
     return vA[0]*vB[0]+vA[1]*vB[1]
 
+def sub(v1, v2):
+    return Point(v1.x - v2.x, v1.y-v2.y)
+
+def mod(v):
+    return math.sqrt(math.pow(v.x,2) + math.pow(v.y,2))
+
+def mult(c,v):
+    return Point(c*v.x, c*v.y)
+
 def getAngle(p1,p2,p3,p4):
     # Get nicer vector form
     lineA = ((p1.x,p1.y),(p2.x,p2.y))
@@ -110,6 +119,56 @@ def getAngle(p1,p2,p3,p4):
     ang_deg = math.degrees(angle)%360
     return ang_deg
 
+def calcCenterPoint(new_point, rad, coords):
+    # https://stackoverflow.com/questions/51223685/create-circle-tangent-to-two-lines-with-radius-r-geometry
+    
+    p1 = coords[len(coords) - 2]
+    p2 = coords[len(coords) - 1]
+    p3 = new_point
+
+    le1 = math.sqrt(math.pow(p2.x-p1.x,2) + math.pow(p2.y-p1.y,2)) # length of A1-B1 segment
+    v1x = (p2.x-p1.x) / le1
+    v1y = (p2.y-p1.y) / le1
+
+    le2 = math.sqrt(math.pow(p3.x-p2.x,2) + math.pow(p3.y-p2.y,2)) # length of A1-B1 segment
+    v2x = (p3.x-p2.x) / le2
+    v2y = (p3.y-p2.y) / le2
+
+    R = rad
+    px1 = p1.x - v1y*R
+    py1 = p1.y + v1x*R
+    px2 = p2.x - v2y*R
+    py2 = p2.y + v2x*R
+
+    px1u = p1.x + v1y*R
+    py1u = p1.y - v1x*R
+    px2u = p2.x + v2y*R
+    py2u = p2.y - v2x*R
+    
+    den = v1x*v2y - v2x*v1y
+
+    k1 = (v2y*(px2-px1) - v2x*(py2-py1)) / den
+    # k2 = (v1y*(px2-px1) - v1x*(py2-py1)) / den
+
+    k1u = (v2y*(px2u-px1u) - v2x*(py2u-py1u)) / den
+    # k2u = (v1y*(px2u-px1u) - v1x*(py2u-py1u)) / den
+    
+    tx1 = p1.x + k1*v1x
+    ty1 = p1.y + k1*v1y
+    # tx2 = p2.x + k2*v2x
+    # ty2 = p2.y + k2*v2x
+
+    if(onSegment(p1,Point(tx1,ty1),p2)):
+        cx =  px1 + k1*v1x
+        cy =  py1 + k1*v1y
+    else:
+        cx =  px1u + k1u*v1x
+        cy =  py1u + k1u*v1y
+    
+        
+
+    return Point(cx,cy)
+
 def main():
     pygame.init()
 
@@ -120,7 +179,7 @@ def main():
     prev_point = Point(0,0)
     line_count = -1
     ANGLE_TOLERANCE = 20
-    RADIUS_IN_PIXELS = 70
+    RADIUS_IN_PIXELS = 30
     coords = [] # stores coordinates as point values
 
     DISPLAY.fill(WHITE)
@@ -173,7 +232,6 @@ def main():
                         if(doIntersect(p1, q1, p2, q2)):
                             legal_line = False
 
-                if line_count > 1:
                     # check if angle between old and new line is more than 15 degrees
                     # finds angle in relation to x axis (for some reason)
                     angle = getAngle(new_point, prev_point, coords[line_count-1], prev_point)
@@ -184,6 +242,14 @@ def main():
                 if legal_line:
                     if line_count != -1:
                         pygame.draw.aaline(DISPLAY, BLUE, (prev_point.x, prev_point.y), (new_point.x, new_point.y))
+
+                        # TODO draw circle
+                        if line_count >= 1:
+                            
+                            centCoord = calcCenterPoint(new_point, RADIUS_IN_PIXELS, coords)
+                            rect = Rect(centCoord.x-RADIUS_IN_PIXELS, centCoord.y-RADIUS_IN_PIXELS, RADIUS_IN_PIXELS*2, RADIUS_IN_PIXELS*2)
+                            pygame.draw.arc(DISPLAY,BLUE,rect,0,360, 1)
+
                         pygame.display.flip()
                     coords.append(Point(new_point.x, new_point.y))
                     prev_point = Point(new_point.x, new_point.y)
