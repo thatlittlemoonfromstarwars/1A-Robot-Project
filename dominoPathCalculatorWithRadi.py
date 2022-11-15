@@ -91,15 +91,6 @@ def doIntersect(p1,q1,p2,q2):
 def dot(vA, vB):
     return vA[0]*vB[0]+vA[1]*vB[1]
 
-def sub(v1, v2):
-    return Point(v1.x - v2.x, v1.y-v2.y)
-
-def mod(v):
-    return math.sqrt(math.pow(v.x,2) + math.pow(v.y,2))
-
-def mult(c,v):
-    return Point(c*v.x, c*v.y)
-
 def getAngle(p1,p2,p3,p4):
     # Get nicer vector form
     lineA = ((p1.x,p1.y),(p2.x,p2.y))
