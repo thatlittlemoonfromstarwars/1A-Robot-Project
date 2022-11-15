@@ -117,11 +117,11 @@ def calcCenterPoint(new_point, rad, coords):
     p2 = coords[len(coords) - 1]
     p3 = new_point
 
-    le1 = math.sqrt(math.pow(p2.x-p1.x,2) + math.pow(p2.y-p1.y,2)) # length of A1-B1 segment
+    le1 = math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2) # length of A1-B1 segment
     v1x = (p2.x-p1.x) / le1
     v1y = (p2.y-p1.y) / le1
 
-    le2 = math.sqrt(math.pow(p3.x-p2.x,2) + math.pow(p3.y-p2.y,2)) # length of A1-B1 segment
+    le2 = math.sqrt((p3.x-p2.x)**2 + (p3.y-p2.y)**2) # length of A1-B1 segment
     v2x = (p3.x-p2.x) / le2
     v2y = (p3.y-p2.y) / le2
 
@@ -170,7 +170,7 @@ def main():
     prev_point = Point(0,0)
     line_count = -1
     ANGLE_TOLERANCE = 20
-    RADIUS_IN_PIXELS = 30
+    RADIUS_IN_PIXELS = 50
     coords = [] # stores coordinates as point values
 
     DISPLAY.fill(WHITE)

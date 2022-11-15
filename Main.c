@@ -52,6 +52,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
 int getCoordsFromFile(Coord* coords);
 float calcLength(Coord nextCoord, Coord curCoord);
 float calcAngle(Coord nextCoord, Coord curCoord);
+void endProgram();
 
 // calculation functions
 int distToDeg(float dist);
@@ -59,10 +60,12 @@ float degToDist(int deg);
 
 // constants
 const float WHEEL_RAD = 2.75; // in cm
-const int DOMINOS_AT_MAX_LOAD = 60;
+const int DOMINOS_AT_MAX_LOAD = 30;
 const int MAX_COORDS = 50; // don't type 70 here
 const int PIXELS_PER_CM = 15;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
+const int DIST_IN_FRONT_LIM = 5; // in cm
+const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
 const int DOOR_SPEED = 10;
 
@@ -82,7 +85,7 @@ task main()
 	// initialization for domino dropping
 	nMotorEncoder(DISPENSER_MOT_PORT) = 0;
 	nMotorEncoder(DOOR_MOT_PORT) = 0;
-	bool dropIndex = 0;
+	bool dropIndex = false; // false for back position, true for middle position
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
 	wait1Msec(5000);
 	if(selectMode())// false for line follow, true for file path
@@ -142,6 +145,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount)
 
 			int angleToTurn = calcAngle(nextCoord, nextCoordAdj)*180/PI;
 
+
 			// FOR TESTING ONLY
 
 			// https://math.stackexchange.com/questions/405024/determine-center-of-circle-if-radius-and-2-tangent-line-segments-are-given
@@ -158,7 +162,19 @@ void followPathFromFile(bool &dropIndex, int &dominoCount)
 		setDriveTrainSpeed(50);
 		while(abs(nMotorEncoder(LEFT_MOT_PORT)) < drive_length)
 		{
-			if(((int)degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)DIST_BETWEEN_DOMINOS*100) == 0)
+			// check for break conditions
+			if(SensorValue[TOUCH_PORT])
+			{
+				stopAndKnock();
+				return;
+			}
+			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+			{
+				somethingInTheWay();
+			}
+
+			// drop domino every DIST_BETWEEN_DOMINOS
+			if((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 			{
 				dropDomino(dropIndex, dominoCount);
 				setDriveTrainSpeed(50);
@@ -170,7 +186,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount)
 
 		coord_index++;
 	}
-
+	endProgram();
 }
 
 int getCoordsFromFile(Coord* coords)
@@ -339,6 +355,17 @@ void somethingInTheWay (int ULTRASONIC_PORT, float max_dist, int motor_power)
 	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
 }
 
+void endProgram()
+{
+	setDriveTrainSpeed(0);
+	time1[T1] = 0;
+	while(time1[T1] < TIME_TO_PRESS*1000)
+	{
+		if(SensorValue[TOUCH_PORT])
+			stopAndKnock();
+	}
+}
+
 int distToDeg(float dist)
 {
 	return dist*180/PI/WHEEL_RAD;
@@ -378,13 +405,13 @@ void dropDomino(bool &dropIndex, int &dominoCount)
 {
 	setDriveTrainSpeed(0);
 	closeDoor();
-	if (dropIndex == 0)
+	if (!dropIndex)
 	{
 		motor[DISPENSER_MOT_PORT] = -15;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > -325)
 		{}
 		motor[DISPENSER_MOT_PORT] = 0;
-		dropIndex = 1;
+		dropIndex = true;
 	}
 	else
 	{
@@ -393,7 +420,7 @@ void dropDomino(bool &dropIndex, int &dominoCount)
 		{}
 		motor[DISPENSER_MOT_PORT]= 0;
 
-		dropIndex = 0;
+		dropIndex = false;
 		wait1Msec(100);
 
 		motor[DISPENSER_MOT_PORT] = 15;
