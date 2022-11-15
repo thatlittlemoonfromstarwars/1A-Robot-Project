@@ -31,10 +31,10 @@ typedef struct
 } Coord;
 
 void configureAllSensors();
-void selectMode(bool &mode);
+bool selectMode();
 
 // movement functions
-void dropDomino(int &dropIndex, int &dominoCount); // Henrique
+void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
 void openDoor();
 void closeDoor();
 
@@ -42,7 +42,7 @@ void stopAndKnock(int motor_power, int enc_limit); // Josh
 void somethingInTheWay(); // stops and informs the user to move the object in the way
 
 void driveDist(int mot_pow, float dist);
-void driveDistWhileDispensing(int mot_pow, float dist, int &dropIndex, int &dominoCount);
+void driveDistWhileDispensing(int mot_pow, float dist, bool &dropIndex, int &dominoCount);
 void setDriveTrainSpeed(int speed);
 void turnInPlace(int angle, int mot_pow);
 
@@ -82,12 +82,10 @@ task main()
 	// initialization for domino dropping
 	nMotorEncoder(DISPENSER_MOT_PORT)=0;
 	nMotorEncoder(DOOR_MOT_PORT)=0;
-	int dropIndex = 0;
+	bool dropIndex = 0;
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
 
-	bool mode = false; // false for line follow, true for file path
-	selectMode(mode);
-	if(mode)
+	if(selectMode())// false for line follow, true for file path
 	{
 		followLine();
 	}
@@ -127,15 +125,16 @@ void followPathFromFile()
 
 	for(int coord_index = 0; coord_index < num_coords; num_coords++)
 	{
+		// do calculations
 		float drive_length = calcLength(coords[coord_index], curCoord)/PIXELS_PER_CM;
-		// FOR TESTING ONLY REPLACE LATER WITH DOMINO DROPPING
-		driveDist(50, drive_length);
+		// TODO subtract lengths for turning radius
+
 		if(coord_index != num_coords-1)
 		{
 			Coord nextCoord;
 			nextCoord = coords[coord_index+1];
 
-			// calculate and turn angle to next vector
+			// calculate turn angle to next vector
 			Coord nextCoordAdj;
 			nextCoordAdj.x = nextCoord.x-curCoord.x;
 			nextCoordAdj.y = nextCoord.y-curCoord.y;
@@ -143,13 +142,29 @@ void followPathFromFile()
 			int angleToTurn = calcAngle(nextCoord, nextCoordAdj)*180/PI;
 
 			// FOR TESTING ONLY
-			turnInPlace(angleToTurn, 20);
-			// https://math.stackexchange.com/questions/405024/determine-center-of-circle-if-radius-and-2-tangent-line-segments-are-given
 
+			// https://math.stackexchange.com/questions/405024/determine-center-of-circle-if-radius-and-2-tangent-line-segments-are-given
 
 			// update current point
 			curCoord = nextCoord;
 		}
+		else
+		{
+			int angleToTurn = 360;
+		}
+
+		// drive length
+		setDriveTrainSpeed(50);
+		while(abs(nMotorEncoder(LEFT_MOT_PORT)) < drive_length)
+		{
+			if(abs(nMotorEncoder(LEFT_MOT_PORT))%DIST_BETWEEN_DOMINOS == 0)
+			{
+				dropDomino();
+				setDriveTrainSpeed(50);
+			}
+		}
+
+		// start turn
 
 	}
 
@@ -205,11 +220,13 @@ void configureAllSensors()
 	wait1Msec(50);
 }
 
-void selectMode(bool &mode)
+bool selectMode()
 {
 	displayBigTextLine(5, "Choose Mode");
 	displayBigTextLine(7, "Left - Follow Line");
 	displayBigTextLine(9, "Right - Follow Path from File");
+
+	bool mode = false;
 
 	while(!getButtonPress(buttonLeft) && !getButtonPress(buttonRight))
 	{}
@@ -222,9 +239,10 @@ void selectMode(bool &mode)
 	{
 		mode = true;
 	}
+	return mode;
 
 }
-
+/*
 void driveDist(int mot_pow, float dist) // input negative motor power for backwards
 {
 	setDriveTrainSpeed(mot_pow);
@@ -234,7 +252,7 @@ void driveDist(int mot_pow, float dist) // input negative motor power for backwa
 	setDriveTrainSpeed(0);
 }
 
-void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoCount)
+void driveDistWhileDispensing(int mot_pow, int dist, bool &dropIndex,int &dominoCount)
 {
 	nMotorEncoder[RIGHT_MOT_PORT] = 0;
 	while(abs(nMotorEncoder[RIGHT_MOT_PORT]) < distToDeg(dist))
@@ -247,6 +265,7 @@ void driveDistWhileDispensing(int mot_pow, int dist, int &dropIndex,int &dominoC
 	}
 
 }
+*/
 
 void turnInPlace(int angle, int mot_pow)
 {
@@ -274,12 +293,12 @@ void turnInPlace(int angle, int mot_pow)
 void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in functions
 {
 	nMotorEncoder[LEFT_MOT_PORT] = 0;
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
+	setDriveTrainSpeed(motor_power);
 
 	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
 	{}
 
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
+	setDriveTrainSpeed(0);
 
 	resetGyro(GYRO_PORT);
 
@@ -297,7 +316,7 @@ void stopAndKnock (int motor_power, int enc_limit) // TODO update with built in 
 	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
 	{}
 
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
+	setDriveTrainSpeed(0);
 
 }
 
@@ -338,31 +357,32 @@ void openDoor()
 	while (nMotorEncoder(DOOR_MOT_PORT)<DOOR_ANG)
 	{}
 	motor[DOOR_MOT_PORT] = 0;
-
-	return;
 }
 
 void closeDoor()
 {
-	motor[DOOR_MOT_PORT] = -1*DOOR_SPEED;
-	while (nMotorEncoder(DOOR_MOT_PORT)>5)
-	{}
-	motor[DOOR_MOT_PORT] = 0;
-
-	return;
+	if(!nMotorEncoder(DOOR_MOT_PORT)<5)
+	{
+		motor[DOOR_MOT_PORT] = -1*DOOR_SPEED;
+		while (nMotorEncoder(DOOR_MOT_PORT)>5)
+		{}
+		motor[DOOR_MOT_PORT] = 0;
+	}
 }
 
-void dropDomino(int &dropIndex, int &dominoCount)
+void dropDomino(bool &dropIndex, int &dominoCount)
 {
+	setDriveTrainSpeed(0);
+	closeDoor();
 	if (dropIndex == 0)
 	{
 		motor[DISPENSER_MOT_PORT] = -15;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > -325)
 		{}
 		motor[DISPENSER_MOT_PORT] = 0;
-		dropIndex += 1;
+		dropIndex = 1;
 	}
-	else if (dropIndex == 1)
+	else
 	{
 		motor[DISPENSER_MOT_PORT] = -15;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > -550)
@@ -380,6 +400,5 @@ void dropDomino(int &dropIndex, int &dominoCount)
 	wait1Msec(700);
 	openDoor();
 	dominoCount--;
-	driveDist(15, DIST_BETWEEN_DOMINOS);
-	closeDoor();
+	// continue line or path follow after
 }
