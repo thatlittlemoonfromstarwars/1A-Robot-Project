@@ -369,40 +369,18 @@ void turnInPlace(int angle, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-void stopAndKnock () // Josh
+void stopAndKnock (motor_power, ENC_limit) // Josh
 {
-	// TODO fix this to just reverse, not turn
 
 	// takes motor power, a distance in encoded degrees and the gyro sensor port.
-	// moves forward, turns 180 degrees, moves forward again to knock down first domino.
-	int enc_limit = DIST_BETWEEN_DOMINOS;
-	int motor_power = 50;
-	nMotorEncoder[LEFT_MOT_PORT] = 0;
-	setDriveTrainSpeed(-1*motor_power);
+	// moves backwards to knock over first domino
 
-	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
+	nMotorEncoder(motorA) = 0;
+	setDriveTrainSpeed(motor_power);
+	while(nMotorEncoder(motorA) < ENC_limit)
 	{}
-
 	setDriveTrainSpeed(0);
-
-	resetGyro(GYRO_PORT);
-
-	motor[LEFT_MOT_PORT] = motor_power;
-	motor[RIGHT_MOT_PORT] = -1*motor_power;
-
-	while(getGyroDegrees(GYRO_PORT) < 180)
-	{}
-
-	nMotorEncoder[LEFT_MOT_PORT] = 0;
-
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = 0;
-	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = motor_power;
-
-	while(nMotorEncoder[LEFT_MOT_PORT] < enc_limit)
-	{}
-
-	setDriveTrainSpeed(0);
-
+	return;
 }
 
 void openDoor() // Henrique
