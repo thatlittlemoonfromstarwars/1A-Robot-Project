@@ -30,7 +30,7 @@ typedef struct
 
 } Coord;
 
-// initialization functions
+// one-time functions
 void configureAllSensors();
 bool selectMode();
 void endProgram();
@@ -96,7 +96,7 @@ task main()
 	}
 }
 
-// initialization functions
+//  ********************************** one-time functions *********************************************
 void configureAllSensors()
 {
 	SensorType[TOUCH_PORT] = sensorEV3_Touch;
@@ -148,7 +148,7 @@ void endProgram()
 	}
 }
 
-// high level functions
+// ********************************** high level functions ************************************************
 void followLine(bool &dropIndex, int &dominoCount) // Sean
 {
 
@@ -206,6 +206,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 		}
 		else
 		{
+			// TODO this has to be updated
 			int angleToTurn = 360;
 		}
 
@@ -233,7 +234,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 		}
 
 		// start turn
-		// use motor encoder and arc length
+		// use motor encoder and arc length or just with gyro
 
 		coord_index++;
 	}
@@ -311,7 +312,7 @@ void somethingInTheWay (int motor_power) // Josh
 	setDriveTrainSpeed(motor_power);
 }
 
-// calculation functions
+// ********************************** calculation functions ***********************************************
 float calcLength(Coord nextCoord, Coord curCoord)
 {
 	return sqrt(pow(nextCoord.x-curCoord.x,2) + pow(nextCoord.y-curCoord.y, 2));
@@ -332,7 +333,7 @@ float degToDist(int deg)
 	return deg*PI*WHEEL_RAD/180;
 }
 
-// movement functions
+// ********************************** movement functions ***************************************************
 void setDriveTrainSpeed(int speed)
 {
 	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -1*speed;
