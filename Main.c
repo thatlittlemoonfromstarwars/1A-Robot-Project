@@ -120,21 +120,12 @@ bool selectMode()
 	displayBigTextLine(7, "Left - Follow Line");
 	displayBigTextLine(9, "Right - Follow Path from File");
 
-	bool mode = false;
-
 	while(!getButtonPress(buttonLeft) && !getButtonPress(buttonRight))
 	{}
 
-	if(getButtonPress(buttonLeft))
-	{
-		mode = false;
-	}
-	else if(getButtonPress(buttonRight))
-	{
-		mode = true;
-	}
-	return mode;
-
+	// returns true if buttonRight is pressed (path from file mode)
+	// returns false if buttonLeft is pressed (line follow mode)
+	return getButtonPress(buttonRight);
 }
 
 void endProgram()
@@ -160,11 +151,15 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 	Coord coords[MAX_COORDS];
 	int num_coords = getCoordsFromFile(coords);
 
-	// calc how to get to starting coord
-	float first_length = sqrt(pow(coords[0].x,2) + pow(coords[0].y,2))/PIXELS_PER_CM;
+	// calculate how to get to starting Coord
+	Coord origin;
+	origin.x = 0;
+	origin.y = 0;
+
+	float first_length = calcLength(coords[0],origin)/PIXELS_PER_CM;
 	int first_angle = atan2(coords[0].y, coords[0].x)*180/PI;
 
-	// drive to first coord and turn
+	// turn and drive to first coord
 	turnInPlace(first_angle, 20);
 	driveDist(50, first_length);
 
@@ -175,26 +170,32 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 	turnInPlace(calcAngle(coords[1], point2adjusted), 20);
 
 	Coord curCoord;
-	curCoord = coords[1];
+	curCoord = coords[0];
 
-	int coord_index = 0;
+	int coord_index = 1; // represents index of next coordinate
 	while(coord_index < num_coords && dominoCount > 0)
 	{
+		Coord nextCoord;
+		nextCoord = coords[coord_index];
+
 		// do calculations
-		float drive_length = calcLength(coords[coord_index], curCoord)/PIXELS_PER_CM;
+		float drive_length = calcLength(nextCoord, curCoord)/PIXELS_PER_CM;
 		// TODO subtract lengths for turning radius
 
 		if(coord_index != num_coords-1)
 		{
-			Coord nextCoord;
-			nextCoord = coords[coord_index+1];
+			Coord nextCoord2;
+			nextCoord2 = coords[coord_index+1];
 
 			// calculate turn angle to next vector
-			Coord nextCoordAdj;
-			nextCoordAdj.x = nextCoord.x-curCoord.x;
-			nextCoordAdj.y = nextCoord.y-curCoord.y;
 
-			int angleToTurn = calcAngle(nextCoord, nextCoordAdj)*180/PI;
+			/* PROBABLY WRONG
+			Coord nextCoord2Adj;
+			nextCoord2Adj.x = nextCoord2.x-curCoord.x;
+			nextCoord2Adj.y = nextCoord2.y-curCoord.y;
+
+			int angleToTurn = calcAngle(nextCoord2, nextCoord2Adj)*180/PI;
+			*/
 
 
 			// FOR TESTING ONLY
@@ -207,7 +208,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 		else
 		{
 			// TODO this has to be updated
-			int angleToTurn = 360;
+			int angleToTurn = 0;
 		}
 
 		// drive length
@@ -235,6 +236,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 
 		// start turn
 		// use motor encoder and arc length or just with gyro
+		// if angle is 0, dont turn
 
 		coord_index++;
 	}
