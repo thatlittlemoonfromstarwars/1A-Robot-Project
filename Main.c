@@ -52,7 +52,7 @@ float degToDist(int deg);
 void setDriveTrainSpeed(int speed);
 void driveDist(int mot_pow, float dist);
 void turnInPlace(int angle, int mot_pow);
-void stopAndKnock(); // Josh
+void stopAndKnock(int motor_power, int ENC_limit); // Josh
 void openDoor();
 void closeDoor();
 
@@ -370,7 +370,7 @@ void turnInPlace(int angle, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-void stopAndKnock (motor_power, ENC_limit) // Josh
+void stopAndKnock (int motor_power, int ENC_limit) // Josh
 {
 
 	// takes motor power, a distance in encoded degrees and the gyro sensor port.
