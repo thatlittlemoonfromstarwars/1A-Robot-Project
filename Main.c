@@ -52,7 +52,7 @@ float degToDist(int deg);
 void setDriveTrainSpeed(int speed);
 void driveDist(int mot_pow, float dist);
 void turnInPlace(int angle, int mot_pow);
-void stopAndKnock(int motor_power, int ENC_limit); // Josh
+void stopAndKnock(); // Josh
 void openDoor();
 void closeDoor();
 
@@ -372,15 +372,13 @@ void turnInPlace(int angle, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-void stopAndKnock (int motor_power, int ENC_limit) // Josh
+void stopAndKnock() // Josh
 {
-
-	// takes motor power, a distance in encoded degrees and the gyro sensor port.
 	// moves backwards to knock over first domino
 
-	nMotorEncoder(motorA) = 0;
-	setDriveTrainSpeed(motor_power);
-	while(nMotorEncoder(motorA) < ENC_limit)
+	nMotorEncoder(LEFT_MOT_PORT) = 0;
+	setDriveTrainSpeed(-30);
+	while(nMotorEncoder(LEFT_MOT_PORT) < (DIST_BETWEEN_DOMINOS-0.5)*180/PI/WHEEL_RAD)
 	{}
 	setDriveTrainSpeed(0);
 	return;
