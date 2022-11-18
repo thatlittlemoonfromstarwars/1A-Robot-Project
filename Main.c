@@ -44,13 +44,14 @@ void somethingInTheWay(int motor_power); // stops and informs the user to move t
 
 // calculation functions
 float calcLength(Coord &nextCoord, Coord &curCoord);
-float calcAngle(Coord &nextCoord);
-float distToDeg(float dist);
-float degToDist(float deg);
+int calcAngle(Coord &curCoord, Coord &coord1, Coord &coord2);
+int distToDeg(float dist);
+float degToDist(int deg);
 
 // movement functions
 void setDriveTrainSpeed(int speed);
 void driveDist(int mot_pow, float dist);
+void driveWhileDropping(int mot_pow, float dist, bool &dropIndex, int &dominoCount);
 void turnInPlace(int angle, int mot_pow);
 void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount);
 void stopAndKnock(); // Josh
@@ -64,7 +65,7 @@ const int MAX_COORDS = 50; // don't type 70 here
 const int PIXELS_PER_CM = 15;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const int DIST_IN_FRONT_LIM = 5; // in cm
-const float TURN_RAD = 20; // needs to be more than 6.75 in cm
+const float TURN_RAD = 30; //in cm - needs to be more than 6.75cm
 const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
 const int DOOR_SPEED = 10;
@@ -162,65 +163,49 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 	//int num_coords = getCoordsFromFile(coords);
 	int num_coords = 3;
 
-	// calculate how to get to starting Coord
 	Coord origin;
 	origin.x = 0;
 	origin.y = 0;
 
+	// calculate how to get to starting Coord
 	float first_length = calcLength(coords[0],origin)/PIXELS_PER_CM;
-	float first_angle = atan2(coords[0].y, coords[0].x)*180/PI;
+	int first_angle = atan2(coords[0].y, coords[0].x)*180/PI;
 
 	// turn and drive to first coord
 	turnInPlace(first_angle, 20);
 	driveDist(50, first_length);
 
-
 	// turn towards second point
-	Coord point2adjusted;
-	point2adjusted.x = coords[1].x-coords[0].x;
-	point2adjusted.y = coords[1].y-coords[0].y;
-	turnInPlace(calcAngle(point2adjusted), 20); // this is breaking
+	turnInPlace(calcAngle(origin,coords[0],coords[1]), 20);
 
 	Coord curCoord;
 	curCoord.x = coords[0].x;
 	curCoord.y = coords[0].y;
 
-	float angleToTurn = 0;
+	int angleToTurn = 0;
 
 	int coord_index = 1; // represents index of next coordinate
 	while(coord_index < num_coords && dominoCount > 0)
 	{
-		Coord nextCoord;
-		nextCoord.x = coords[coord_index].x;
-		nextCoord.y = coords[coord_index].y;
-
 		// do calculations
-		float drive_length = calcLength(nextCoord, curCoord)/PIXELS_PER_CM;
+		Coord coord1;
+		coord1.x = coords[coord_index].x;
+		coord1.y = coords[coord_index].y;
+
+		float drive_length = calcLength(curCoord, coord1)/PIXELS_PER_CM;
 		// TODO subtract lengths for turning radius
 
 		if(coord_index != num_coords-1)
 		{
-			Coord nextCoord2;
-			nextCoord2 = coords[coord_index+1];
+			Coord coord2;
+			coord2.x = coords[coord_index+1].x;
+			coord2.y = coords[coord_index+1].y;
 
-			// calculate turn angle to next vector
+			angleToTurn = calcAngle(curCoord, coord1, coord2);
 
-			//PROBABLY WRONG
-			Coord nextCoord2Adj;
-			nextCoord2Adj.x = nextCoord2.x-curCoord.x;
-			nextCoord2Adj.y = nextCoord2.y-curCoord.y;
-
-			angleToTurn = calcAngle(nextCoord2Adj)*180/PI;
-
-
-
-			// FOR TESTING ONLY
-
-			// https://math.stackexchange.com/questions/405024/determine-center-of-circle-if-radius-and-2-tangent-line-segments-are-given
-
-			// update current point
-			curCoord.x = nextCoord.x;
-			curCoord.y = nextCoord.y;
+			// update coordinates
+			curCoord.x = coord1.x;
+			curCoord.y = coord1.y;
 		}
 		else
 		{
@@ -229,35 +214,8 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 		}
 
 		// drive length
-		setDriveTrainSpeed(50);
-		while(abs(nMotorEncoder(LEFT_MOT_PORT)) < distToDeg(drive_length))
-		{
-			// check for break conditions
-			if(SensorValue[TOUCH_PORT])
-			{
-				stopAndKnock();
-				return;
-			}
-			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
-			{
-				somethingInTheWay(50);
-			}
-
-			// drop domino every DIST_BETWEEN_DOMINOS
-			if((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-			{
-				dropDomino(dropIndex, dominoCount);
-				setDriveTrainSpeed(50);
-				while((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-				{}
-			}
-		}
-
-		// start turn
-		// use motor encoder and arc length or just with gyro
-		// if angle is 0, dont turn
-
-		// for testing
+		driveWhileDropping(50, drive_length, dropIndex, dominoCount);
+		// turn
 		turnWhileDropping(angleToTurn, 20, dropIndex, dominoCount);
 		coord_index++;
 	}
@@ -267,7 +225,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 int getCoordsFromFile(Coord* coords) // Andor
 {
 	TFileHandle fin;
-	bool fileOkay = openReadPC(fin,"drive_coords.txt");
+	bool fileOkay = openReadPC(fin,"coords.txt");
 
 	int num_coords = 0;
 	readIntPC(fin, num_coords);
@@ -341,20 +299,24 @@ float calcLength(Coord &nextCoord, Coord &curCoord)
 	return sqrt(pow(nextCoord.x-curCoord.x,2) + pow(nextCoord.y-curCoord.y, 2));
 }
 
-float calcAngle(Coord &nextCoord)
+int calcAngle(Coord &curCoord, Coord &coord1, Coord &coord2)
 {
-	//if(curCoord.x == 0 && curCoord.y == 0)
-		return atan2(nextCoord.y, nextCoord.x)*180/PI;
+	Coord origin;
+	origin.x = 0;
+	origin.y = 0;
+	Coord adjCoord;
+	adjCoord.x = coord2.x-coord1.x;
+	adjCoord.y = coord2.y-coord1.y;
+	return acos((coord1.x*adjCoord.x+coord1.y*adjCoord.y)/(calcLength(coord1,origin)*calcLength(adjCoord, origin)))*180/PI;
 
-	//return asin((nextCoord.y*curCoord.x - nextCoord.x*curCoord.y)/(pow(curCoord.x, 2)+ pow(curCoord.y, 2)));
 }
 
-float distToDeg(float dist)
+int distToDeg(float dist)
 {
 	return dist*180/PI/WHEEL_RAD;
 }
 
-float degToDist(float deg)
+float degToDist(int deg)
 {
 	return deg*PI*WHEEL_RAD/180;
 }
@@ -373,6 +335,34 @@ void driveDist(int mot_pow, float dist)
 	while(abs(nMotorEncoder[LEFT_MOT_PORT]) < distToDeg(dist))
 	{}
 	setDriveTrainSpeed(0);
+}
+
+void driveWhileDropping(int mot_pow, float dist, bool &dropIndex, int &dominoCount)
+{
+	setDriveTrainSpeed(mot_pow);
+	nMotorEncoder[LEFT_MOT_PORT] = 0;
+	while(abs(nMotorEncoder(LEFT_MOT_PORT)) < distToDeg(dist))
+	{
+		// check for break conditions
+		if(SensorValue[TOUCH_PORT])
+		{
+			stopAndKnock();
+			return;
+		}
+		else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+		{
+			somethingInTheWay(mot_pow);
+		}
+
+		// drop domino every DIST_BETWEEN_DOMINOS
+		if((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+		{
+			dropDomino(dropIndex, dominoCount);
+			setDriveTrainSpeed(mot_pow);
+			while((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			{}
+		}
+	}
 }
 
 void turnInPlace(int angle, int mot_pow)
