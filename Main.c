@@ -5,7 +5,7 @@ Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 v1.3
 
 Assumptions:
-
+- more than 3 instructions will be given in path file mode
 
 Motor Ports:
 A - left drive wheel
@@ -25,10 +25,10 @@ Sensor Ports:
 
 typedef struct
 {
-	int x;
-	int y;
+	bool is_ang;
+	int val;
 
-} Coord;
+} Instr;
 
 // one-time functions
 void configureAllSensors();
@@ -38,22 +38,20 @@ void endProgram();
 // high level functions
 void followLine(bool &dropIndex, int &dominoCount); // Sean
 void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
-int getCoordsFromFile(Coord* coords);
+int getInstrFromFile(Instr* allInstr);
 void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
 void somethingInTheWay(int motor_power); // stops and informs the user to move the object in the way
 
 // calculation functions
-float calcLength(Coord &nextCoord, Coord &curCoord);
-int calcAngle(Coord &curCoord, Coord &coord1, Coord &coord2);
 int distToDeg(float dist);
 float degToDist(int deg);
 
 // movement functions
 void setDriveTrainSpeed(int speed);
-void driveDist(int mot_pow, float dist);
-void driveWhileDropping(int mot_pow, float dist, bool &dropIndex, int &dominoCount);
+void driveDist(float dist,int mot_pow);
+void driveWhileDropping(float dist, int mot_pow, bool &dropIndex, int &dominoCount); // Andor
 void turnInPlace(int angle, int mot_pow);
-void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount);
+void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount); // Andor
 void stopAndKnock(); // Josh
 void openDoor();
 void closeDoor();
@@ -61,8 +59,8 @@ void closeDoor();
 // constants
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 30;
-const int MAX_COORDS = 50; // don't type 70 here
-const int PIXELS_PER_CM = 15;
+const int MAX_INSTR = 100; // don't type 70 here
+const float PIXELS_PER_CM = 15.0;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const int DIST_IN_FRONT_LIM = 5; // in cm
 const float TURN_RAD = 30; //in cm - needs to be more than 6.75cm
@@ -152,97 +150,74 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 {
 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
-	Coord coords[3];
-	coords[0].x = 105;
-	coords[0].y = 116;
-	coords[1].x = 513;
-	coords[1].y = 120;
-	coords[2].x = 520;
-	coords[2].y = 254;
-	//Coord coords[MAX_COORDS];
-	//int num_coords = getCoordsFromFile(coords);
-	int num_coords = 3;
+	Instr allInstr[MAX_INSTR];
 
-	Coord origin;
-	origin.x = 0;
-	origin.y = 0;
+	int num_instr = getInstrFromFile(allInstr);
 
-	// calculate how to get to starting Coord
-	float first_length = calcLength(coords[0],origin)/PIXELS_PER_CM;
-	int first_angle = atan2(coords[0].y, coords[0].x)*180/PI;
-
-	// turn and drive to first coord
-	turnInPlace(first_angle, 20);
-	driveDist(50, first_length);
-
-	// turn towards second point
-	turnInPlace(calcAngle(origin,coords[0],coords[1]), 20);
-
-	Coord curCoord;
-	curCoord.x = coords[0].x;
-	curCoord.y = coords[0].y;
-
-	int angleToTurn = 0;
-
-	int coord_index = 1; // represents index of next coordinate
-	while(coord_index < num_coords && dominoCount > 0)
+	// drive to starting position
+	for(int instr_index = 0; instr_index < 3; instr_index++)
 	{
-		// do calculations
-		Coord coord1;
-		coord1.x = coords[coord_index].x;
-		coord1.y = coords[coord_index].y;
-
-		float drive_length = calcLength(curCoord, coord1)/PIXELS_PER_CM;
-		// TODO subtract lengths for turning radius
-
-		if(coord_index != num_coords-1)
+		if(allInstr[instr_index].is_ang)
 		{
-			Coord coord2;
-			coord2.x = coords[coord_index+1].x;
-			coord2.y = coords[coord_index+1].y;
-
-			angleToTurn = calcAngle(curCoord, coord1, coord2);
-
-			// update coordinates
-			curCoord.x = coord1.x;
-			curCoord.y = coord1.y;
+			turnInPlace(allInstr[instr_index].val, 25);
 		}
 		else
 		{
-			// TODO this has to be updated
-			angleToTurn = 0;
+			driveDist(allInstr[instr_index].val/PIXELS_PER_CM, 50);
 		}
+	}
 
-		// drive length
-		driveWhileDropping(50, drive_length, dropIndex, dominoCount);
-		// turn
-		turnWhileDropping(angleToTurn, 20, dropIndex, dominoCount);
-		coord_index++;
+	int instr_index = 2; // represents index of next coordinate
+	while(instr_index < num_instr && dominoCount > 0)
+	{
+		// loop through all instructions
+
+		if(allInstr[instr_index].is_ang)
+		{
+			// turn
+			turnWhileDropping(allInstr[instr_index].val, 20, dropIndex, dominoCount);
+		}
+		else
+		{
+			// drive length
+			driveWhileDropping(allInstr[instr_index].val/PIXELS_PER_CM, 50, dropIndex, dominoCount);
+		}
+		instr_index++;
 	}
 	endProgram();
 }
 
-int getCoordsFromFile(Coord* coords) // Andor
+int getInstrFromFile(Instr* allInstr) // Andor
 {
 	TFileHandle fin;
-	bool fileOkay = openReadPC(fin,"coords.txt");
+	bool fileOkay = openReadPC(fin,"instr.txt");
 
-	int num_coords = 0;
-	readIntPC(fin, num_coords);
+	int num_instr = 0;
+	readIntPC(fin, num_instr);
 
-	int tempX = 0;
-	int tempY = 0;
+	int temp_is_ang_int = 0;
+	bool temp_is_ang = false;
+	int temp_val = 0;
 
-	for(int read_index = 0; read_index < num_coords; read_index++)
+	for(int read_index = 0; read_index < num_instr; read_index++)
 	{
-		readIntPC(fin, tempX);
-		readIntPC(fin, tempY);
-		coords[read_index].x = tempX;
-		coords[read_index].y = tempY;
+		readIntPC(fin, temp_is_ang_int);
+		if(temp_is_ang_int == 0)
+		{
+			temp_is_ang = false;
+		}
+		else
+		{
+			temp_is_ang = true;
+		}
+
+		readIntPC(fin, temp_val);
+		allInstr[read_index].is_ang = temp_is_ang;
+		allInstr[read_index].val = temp_val;
 	}
 
 	closeFilePC(fin);
-	return num_coords;
+	return num_instr;
 }
 
 void dropDomino(bool &dropIndex, int &dominoCount) // Henrique
@@ -294,23 +269,6 @@ void somethingInTheWay (int motor_power) // Josh
 }
 
 // ********************************** calculation functions ***********************************************
-float calcLength(Coord &nextCoord, Coord &curCoord)
-{
-	return sqrt(pow(nextCoord.x-curCoord.x,2) + pow(nextCoord.y-curCoord.y, 2));
-}
-
-int calcAngle(Coord &curCoord, Coord &coord1, Coord &coord2)
-{
-	Coord origin;
-	origin.x = 0;
-	origin.y = 0;
-	Coord adjCoord;
-	adjCoord.x = coord2.x-coord1.x;
-	adjCoord.y = coord2.y-coord1.y;
-	return acos((coord1.x*adjCoord.x+coord1.y*adjCoord.y)/(calcLength(coord1,origin)*calcLength(adjCoord, origin)))*180/PI;
-
-}
-
 int distToDeg(float dist)
 {
 	return dist*180/PI/WHEEL_RAD;
@@ -327,7 +285,7 @@ void setDriveTrainSpeed(int speed)
 	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -1*speed;
 }
 
-void driveDist(int mot_pow, float dist)
+void driveDist(float dist, int mot_pow)
 {
 	// input negative motor power for backwards
 	setDriveTrainSpeed(mot_pow);
@@ -337,7 +295,7 @@ void driveDist(int mot_pow, float dist)
 	setDriveTrainSpeed(0);
 }
 
-void driveWhileDropping(int mot_pow, float dist, bool &dropIndex, int &dominoCount)
+void driveWhileDropping(float dist, int mot_pow, bool &dropIndex, int &dominoCount)
 {
 	setDriveTrainSpeed(mot_pow);
 	nMotorEncoder[LEFT_MOT_PORT] = 0;

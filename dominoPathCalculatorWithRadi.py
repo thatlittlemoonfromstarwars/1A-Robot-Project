@@ -185,7 +185,7 @@ def main():
     ANGLE_TOLERANCE = 20
     RADIUS_IN_PIXELS = 50
     coords = [] # stores coordinates as point values
-    instructs = [] # stores instructions
+    instructs = [] # stores instructions for robot
 
     DISPLAY.fill(WHITE)
 
@@ -209,10 +209,6 @@ def main():
                     print("Unable to open file")
                 
                 file.close()
-
-
-                for i in range(len(coords)):
-                    print("(" + str(coords[i].x) + ", " + str(coords[i].y) + ")")
                     
                 pygame.quit()
                 sys.exit()
@@ -241,7 +237,7 @@ def main():
                     # check if new line lintersects with any other line
                     angle = getAngle(new_point, prev_point, coords[line_count-1], prev_point)
 
-                    # check if angle between old and new line is more than 15 degrees
+                    # check if angle between old and new line is more than 20 degrees
                     if angle < ANGLE_TOLERANCE:
                         legal_line = False
                     for i in range(line_count-1):
@@ -259,7 +255,9 @@ def main():
                         if line_count >= 1:
                             
                             centCoord, left_turn = calcCenterPoint(new_point, RADIUS_IN_PIXELS, coords)
-                            if left_turn: # determine whether robot should turn left or right
+
+                            # determine whether robot should turn left or right
+                            if left_turn:
                                 angle = -angle
                             rect = Rect(centCoord.x-RADIUS_IN_PIXELS, centCoord.y-RADIUS_IN_PIXELS, RADIUS_IN_PIXELS*2, RADIUS_IN_PIXELS*2)
                             pygame.draw.arc(DISPLAY,BLUE,rect,0,360, 1)
