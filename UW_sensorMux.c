@@ -17,7 +17,7 @@ mindsensors-ev3smux-test1.c written by Xander Soldaat
 */
 
 // The SMUX can have up to 3 sensors attached to it.
-tMSEV3 muxedSensor[3];
+tMSEV3 muxedSensor[2];
 
 // Configure your sensor type here.  The following are available:
 // colorReflectedLight
@@ -30,7 +30,7 @@ tMSEV3 muxedSensor[3];
 // sonarPresence
 // touchStateBump
 
-tEV3SensorTypeMode typeMode[3];
+tEV3SensorTypeMode typeMode[2];
 
 bool initSensorMux(tMUXSensor muxPort, tEV3SensorTypeMode cType)
 {
