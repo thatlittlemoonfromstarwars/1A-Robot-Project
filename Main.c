@@ -248,6 +248,8 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 			{
 				dropDomino(dropIndex, dominoCount);
 				setDriveTrainSpeed(50);
+				while((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				{}
 			}
 		}
 
@@ -378,14 +380,16 @@ void turnInPlace(int angle, int mot_pow)
 	int initialGyro = getGyroDegrees(GYRO_PORT);
 	if(angle < 0)
 	{
+		// turn left
 		motor[LEFT_MOT_PORT] = mot_pow;
-		motor[RIGHT_MOT_PORT] = -1*mot_pow;
-		while(getGyroDegrees(GYRO_PORT) > initialGyro-angle)
+		motor[RIGHT_MOT_PORT] = -mot_pow;
+		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
 		{}
 	}
 	else if(angle > 0)
 	{
-		motor[LEFT_MOT_PORT] = -1*mot_pow;
+		// turn right
+		motor[LEFT_MOT_PORT] = -mot_pow;
 		motor[RIGHT_MOT_PORT] = mot_pow;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
 		{}
