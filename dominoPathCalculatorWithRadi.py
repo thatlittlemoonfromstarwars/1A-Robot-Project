@@ -180,7 +180,7 @@ def main():
         for event in pygame.event.get():
             if (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE) or event.type == QUIT:
                 # before program ends
-                file = open('drive_coords.txt', 'w')
+                file = open('coords.txt', 'w')
                 try:
                     # write to file
                     file.write(str(len(coords)) + "\n")

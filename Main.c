@@ -43,8 +43,8 @@ void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
 void somethingInTheWay(int motor_power); // stops and informs the user to move the object in the way
 
 // calculation functions
-float calcLength(Coord nextCoord, Coord curCoord);
-float calcAngle(Coord nextCoord, Coord curCoord);
+float calcLength(Coord &nextCoord, Coord &curCoord);
+float calcAngle(Coord &nextCoord);
 float distToDeg(float dist);
 float degToDist(float deg);
 
@@ -52,6 +52,7 @@ float degToDist(float deg);
 void setDriveTrainSpeed(int speed);
 void driveDist(int mot_pow, float dist);
 void turnInPlace(int angle, int mot_pow);
+void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount);
 void stopAndKnock(); // Josh
 void openDoor();
 void closeDoor();
@@ -63,6 +64,7 @@ const int MAX_COORDS = 50; // don't type 70 here
 const int PIXELS_PER_CM = 15;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const int DIST_IN_FRONT_LIM = 5; // in cm
+const float TURN_RAD = 20; // needs to be more than 6.75 in cm
 const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
 const int DOOR_SPEED = 10;
@@ -86,6 +88,7 @@ task main()
 	bool dropIndex = false; // false for back position, true for middle position
 	int dominoCount = DOMINOS_AT_MAX_LOAD;
 	//wait1Msec(5000);
+
 	if(selectMode())// false for line follow, true for file path
 	{
 		followPathFromFile(dropIndex, dominoCount);
@@ -148,10 +151,6 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 {
 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
-	displayTextLine(12, "HIIIIIIIIIIIIII");
-	wait1Msec(2000);
-
-
 	Coord coords[3];
 	coords[0].x = 105;
 	coords[0].y = 116;
@@ -175,11 +174,12 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 	turnInPlace(first_angle, 20);
 	driveDist(50, first_length);
 
+
 	// turn towards second point
 	Coord point2adjusted;
 	point2adjusted.x = coords[1].x-coords[0].x;
 	point2adjusted.y = coords[1].y-coords[0].y;
-	turnInPlace(calcAngle(coords[1], point2adjusted), 20);
+	turnInPlace(calcAngle(point2adjusted), 20); // this is breaking
 
 	Coord curCoord;
 	curCoord.x = coords[0].x;
@@ -210,7 +210,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 			nextCoord2Adj.x = nextCoord2.x-curCoord.x;
 			nextCoord2Adj.y = nextCoord2.y-curCoord.y;
 
-			angleToTurn = calcAngle(nextCoord2, nextCoord2Adj)*180/PI;
+			angleToTurn = calcAngle(nextCoord2Adj)*180/PI;
 
 
 
@@ -258,7 +258,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 		// if angle is 0, dont turn
 
 		// for testing
-		turnInPlace(angleToTurn, 20);
+		turnWhileDropping(angleToTurn, 20, dropIndex, dominoCount);
 		coord_index++;
 	}
 	endProgram();
@@ -336,15 +336,15 @@ void somethingInTheWay (int motor_power) // Josh
 }
 
 // ********************************** calculation functions ***********************************************
-float calcLength(Coord nextCoord, Coord curCoord)
+float calcLength(Coord &nextCoord, Coord &curCoord)
 {
 	return sqrt(pow(nextCoord.x-curCoord.x,2) + pow(nextCoord.y-curCoord.y, 2));
 }
 
-float calcAngle(Coord nextCoord, Coord curCoord)
+float calcAngle(Coord &nextCoord)
 {
 	//if(curCoord.x == 0 && curCoord.y == 0)
-		return atan2(nextCoord.y, nextCoord.y)*180/PI;
+		return atan2(nextCoord.y, nextCoord.x)*180/PI;
 
 	//return asin((nextCoord.y*curCoord.x - nextCoord.x*curCoord.y)/(pow(curCoord.x, 2)+ pow(curCoord.y, 2)));
 }
@@ -384,7 +384,9 @@ void turnInPlace(int angle, int mot_pow)
 		motor[LEFT_MOT_PORT] = mot_pow;
 		motor[RIGHT_MOT_PORT] = -mot_pow;
 		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
-		{}
+		{
+			int gyroDeg = getGyroDegrees(GYRO_PORT);
+		}
 	}
 	else if(angle > 0)
 	{
@@ -392,10 +394,57 @@ void turnInPlace(int angle, int mot_pow)
 		motor[LEFT_MOT_PORT] = -mot_pow;
 		motor[RIGHT_MOT_PORT] = mot_pow;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
-		{}
-	}
+		{
+			int gyroDeg = getGyroDegrees(GYRO_PORT);
+		}
+}
 
 	setDriveTrainSpeed(0);
+}
+
+void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
+{
+	// https://math.stackexchange.com/questions/4310012/calculate-the-turning-radius-turning-circle-of-a-two-wheeled-car
+
+	float const TURN_RATIO = (TURN_RAD-13.5)/TURN_RAD;
+
+	int initialGyro = getGyroDegrees(GYRO_PORT);
+	if(angle > 0)
+	{
+		// turn Right
+		motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
+		motor[RIGHT_MOT_PORT] = -speed;
+		nMotorEncoder(RIGHT_MOT_PORT) = 0;
+		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
+		{
+			if((int)(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			{
+				dropDomino(dropIndex, dominoCount);
+				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
+				motor[RIGHT_MOT_PORT] = -speed;
+				while((int)(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				{}
+			}
+		}
+	}
+	else if(angle < 0)
+	{
+		// turn left
+		motor[LEFT_MOT_PORT] = -speed;
+		motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
+		nMotorEncoder(LEFT_MOT_PORT) = 0;
+		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
+		{
+			if((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			{
+				dropDomino(dropIndex, dominoCount);
+				motor[LEFT_MOT_PORT] = -speed;
+				motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
+				while((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				{}
+			}
+		}
+	}
 }
 
 void stopAndKnock() // Josh
