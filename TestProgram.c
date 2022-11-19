@@ -106,7 +106,7 @@ void followLine()
 
 			if(sensor1 == (int) colorBlack)
 			{
-				motor[motorD] = -5;
+				motor[motorD] = 0;
 			}
 		}
 
@@ -117,11 +117,11 @@ void followLine()
 
 			if(sensor2 == (int) colorBlack)
 			{
-				motor[motorA] = -5;
+				motor[motorA] = 0;
 			}
 		}
 
-		if(SensorValue(S4))
+		if(SensorValue(S2)==1)
 		{
 			return;
 		}
