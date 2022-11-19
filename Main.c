@@ -5,7 +5,7 @@ Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 v1.3
 
 Assumptions:
-- more than 3 instructions will be given in path file mode
+- more than 3 instructions will be in instruction file
 
 Motor Ports:
 A - left drive wheel
