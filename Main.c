@@ -59,7 +59,7 @@ void closeDoor();
 // constants
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 30;
-const int MAX_INSTR = 100; // don't type 70 here
+const int MAX_INSTR = 100;
 const float PIXELS_PER_CM = 15.0;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const int DIST_IN_FRONT_LIM = 5; // in cm

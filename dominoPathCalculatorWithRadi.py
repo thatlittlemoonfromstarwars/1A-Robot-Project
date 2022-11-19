@@ -1,9 +1,5 @@
-# from https://stackoverflow.com/questions/19780411/pygame-drawing-a-rectangle
-
-# to draw rectangle
 import math
 import sys
-
 import pygame
 from pygame.locals import *
 
@@ -102,7 +98,10 @@ def dot(vA, vB):
 def calcLength(p1, p2):
     return math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
 
+# get angle between two vectors
 def getAngle(p1,p2,p3,p4):
+    # https://stackoverflow.com/questions/28260962/calculating-angles-between-line-segments-python-with-math-atan2
+
     # Get nicer vector form
     lineA = ((p1.x,p1.y),(p2.x,p2.y))
     lineB = ((p3.x,p3.y),(p4.x,p4.y))
@@ -120,7 +119,8 @@ def getAngle(p1,p2,p3,p4):
     # Basically doing angle <- angle mod 360
     ang_deg = math.degrees(angle)%360
     return ang_deg
-
+    
+# calculate the center point of a circle tangent to lines forming an angle
 def calcCenterPoint(new_point, rad, coords):
     # https://stackoverflow.com/questions/51223685/create-circle-tangent-to-two-lines-with-radius-r-geometry
     
@@ -168,12 +168,11 @@ def calcCenterPoint(new_point, rad, coords):
         cx =  px1u + k1u*v1x
         cy =  py1u + k1u*v1y
         left_turn = True
-    
-        
 
     return Point(cx,cy), left_turn
 
 def main():
+    # pygame specific instructions from https://stackoverflow.com/questions/19780411/pygame-drawing-a-rectangle
     pygame.init()
 
     DISPLAY = pygame.display.set_mode((700,500),0,32)
@@ -260,12 +259,13 @@ def main():
                             if left_turn:
                                 angle = -angle
                             rect = Rect(centCoord.x-RADIUS_IN_PIXELS, centCoord.y-RADIUS_IN_PIXELS, RADIUS_IN_PIXELS*2, RADIUS_IN_PIXELS*2)
-                            pygame.draw.arc(DISPLAY,BLUE,rect,0,360, 1)
+                            pygame.draw.arc(DISPLAY,BLUE,rect,0,2*math.pi, 1)
 
                         pygame.display.flip()
                     coords.append(new_point)
                     prev_point = new_point
                     instructs.append(Instr(True, angle))
+                    # TODO if length < 0 don't add
                     instructs.append(Instr(False, length))
                     line_count += 1
                
