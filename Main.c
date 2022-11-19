@@ -149,6 +149,7 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 
 void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 {
+	// TODO add break conditions to this function
 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
 	Instr allInstr[MAX_INSTR];
 
@@ -404,7 +405,7 @@ void stopAndKnock() // Josh
 	while(nMotorEncoder(LEFT_MOT_PORT) < distToDeg(DIST_BETWEEN_DOMINOS-0.5))
 	{}
 	setDriveTrainSpeed(0);
-	return;
+	stopAllTasks();
 }
 
 void openDoor() // Henrique
