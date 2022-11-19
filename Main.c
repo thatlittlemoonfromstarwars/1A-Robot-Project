@@ -14,14 +14,16 @@ C - gate motor
 D - right drive wheel
 
 Sensor Ports:
-1 - color
+1 - color(Mux)
 2 - gyro
 3 - touch
 4 - ultrasonic
 
 */
 
-#include "PC_FileIO.c";
+#include "PC_FileIO.c"
+#include "mindsensors-ev3smux.h"
+#include "UW_sensorMux.c"
 
 typedef struct
 {
@@ -45,6 +47,7 @@ void somethingInTheWay(int motor_power); // stops and informs the user to move t
 // calculation functions
 int distToDeg(float dist);
 float degToDist(int deg);
+int max(int value1, int value2);
 
 // movement functions
 void setDriveTrainSpeed(int speed);
@@ -67,6 +70,7 @@ const float TURN_RAD = 30; //in cm - needs to be more than 6.75cm
 const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
 const int DOOR_SPEED = 10;
+const int MUX_WAIT = 10;
 
 const int TOUCH_PORT = S2;
 const int GYRO_PORT = S3;
@@ -110,9 +114,22 @@ void configureAllSensors()
 	wait1Msec(50);
 	SensorMode[GYRO_PORT] = modeEV3Gyro_Calibration;
 	wait1Msec(50);
-	SensorMode[COLOR_PORT] = modeEV3Color_Color;
-	wait1Msec(100);
 	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
+	wait1Msec(50);
+	SensorType[S1] = sensorEV3_GenericI2C;
+	wait1Msec(100);
+
+	if (!initSensorMux(msensor_S1_1, colorMeasureColor))
+	{
+		displayString(2,"Failed to configure colour1");
+		return;
+	}
+	wait1Msec(50);
+	if (!initSensorMux(msensor_S1_2, colorMeasureColor))
+	{
+		displayString(4,"Failed to configure colour2");
+		return;
+	}
 	wait1Msec(50);
 }
 
@@ -144,7 +161,60 @@ void endProgram()
 // ********************************** high level functions ************************************************
 void followLine(bool &dropIndex, int &dominoCount) // Sean
 {
+	time1[T2] = 0;
+	int index = 0;
+	int index2 = 0;
+	int sensor1 = 0;
+	int sensor2 = 0;
+	bool armPosLine = false;
+	int domino_Encoder_Spacing = distToDeg(DIST_BETWEEN_DOMINOS);
 
+	openDoor();
+
+	while(dominoCount>0)
+	{
+ 		if((max(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT]))>domino_Encoder_Spacing)
+ 		{
+			dropDomino(armPosLine, dominoCount);
+			dominoCount--;
+ 			armPosLine = !armPosLine;
+ 			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
+ 		}
+
+		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -10;
+
+		if(time1[T2] > index)
+		{
+			sensor1 = readMuxSensor(msensor_S1_1);
+			index = time1[T1] + MUX_WAIT;
+
+			if(sensor1 == (int) colorBlack)
+			{
+				motor[RIGHT_MOT_PORT] = 0;
+			}
+		}
+
+		if(time1[T2] > index2)
+		{
+			sensor2 = readMuxSensor(msensor_S1_2);
+			index2 = time1[T1] + MUX_WAIT+ 5;
+
+			if(sensor2 == (int) colorBlack)
+			{
+				motor[LEFT_MOT_PORT] = 0;
+			}
+		}
+
+		if(SensorValue(TOUCH_PORT)==1)
+		{
+			return;
+		}
+
+		if(SensorValue(ULTRASONIC_PORT) ==1)
+		{
+			somethingInTheWay(0);
+		}
+	}
 }
 
 void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
@@ -278,6 +348,18 @@ int distToDeg(float dist)
 float degToDist(int deg)
 {
 	return deg*PI*WHEEL_RAD/180;
+}
+
+int max(int value1, int value2)
+{
+	if(value1>value2)
+	{
+		return value1;
+	}
+	else
+	{
+		return value2;
+	}
 }
 
 // ********************************** movement functions ***************************************************
