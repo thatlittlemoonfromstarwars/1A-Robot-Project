@@ -43,11 +43,12 @@ void followPathFromFile(bool &dropIndex, int &dominoCount); // Andor
 int getInstrFromFile(Instr* allInstr);
 void dropDomino(bool &dropIndex, int &dominoCount); // Henrique
 void somethingInTheWay(int motor_power); // stops and informs the user to move the object in the way
+void somethingInTheWay (int left_mot_pow, int right_mot_pow);
 
 // calculation functions
 int distToDeg(float dist);
 float degToDist(int deg);
-int average(int value1, int value2);
+float average(int value1, int value2);
 
 // movement functions
 void setDriveTrainSpeed(int speed);
@@ -157,6 +158,7 @@ void endProgram()
 		if(SensorValue[TOUCH_PORT])
 			stopAndKnock();
 	}
+	stopAllTasks();
 }
 
 // ********************************** high level functions ************************************************
@@ -213,6 +215,7 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 			somethingInTheWay(0);
 		}
 	}
+	endProgram();
 }
 
 void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
@@ -223,20 +226,24 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 
 	int num_instr = getInstrFromFile(allInstr);
 
+	int num_turns = 0;
+	int instr_index = 0;
+
 	// drive to starting position
-	for(int instr_index = 0; instr_index < 3; instr_index++)
+	while(num_turns < 2)
 	{
 		if(allInstr[instr_index].is_ang)
 		{
+			num_turns++;
 			turnInPlace(allInstr[instr_index].val, 25);
 		}
 		else
 		{
 			driveDist(allInstr[instr_index].val/PIXELS_PER_CM, 50);
 		}
+		instr_index++;
 	}
 
-	int instr_index = 2; // represents index of next coordinate
 	while(instr_index < num_instr && dominoCount > 0)
 	{
 		// loop through all instructions
@@ -337,6 +344,22 @@ void somethingInTheWay (int motor_power) // Josh
 	setDriveTrainSpeed(motor_power);
 }
 
+void somethingInTheWay (int left_mot_pow, int right_mot_pow)
+{
+	// takes UltraSonic sensor port, max distance from an object and motor power.
+	// Stops motors, displays message and plays a sound. continues when object is moved.
+	while(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+	{
+		setDriveTrainSpeed(0);
+		eraseDisplay();
+		displayString(5, "Please clear path ahead");
+		playSound(soundBeepBeep); // can change later
+	}
+	ev3StopSound();
+	motor[LEFT_MOT_PORT] = left_mot_pow;
+	motor[RIGHT_MOT_PORT] = right_mot_pow;
+}
+
 // ********************************** calculation functions ***********************************************
 int distToDeg(float dist)
 {
@@ -348,9 +371,9 @@ float degToDist(int deg)
 	return deg*PI*WHEEL_RAD/180;
 }
 
-int average(int value1, int value2)
+float average(int value1, int value2)
 {
-	return (abs(value1 + value2)/2);
+	return (abs(value1 + value2)/2.0);
 }
 
 // ********************************** movement functions ***************************************************
@@ -365,7 +388,17 @@ void driveDist(float dist, int mot_pow)
 	setDriveTrainSpeed(mot_pow);
 	nMotorEncoder[LEFT_MOT_PORT] = 0;
 	while(abs(nMotorEncoder[LEFT_MOT_PORT]) < distToDeg(dist))
-	{}
+	{
+		// check for break conditions
+		if(SensorValue[TOUCH_PORT])
+		{
+			stopAndKnock();
+		}
+		else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+		{
+			somethingInTheWay(mot_pow);
+		}
+	}
 	setDriveTrainSpeed(0);
 }
 
@@ -379,7 +412,6 @@ void driveWhileDropping(float dist, int mot_pow, bool &dropIndex, int &dominoCou
 		if(SensorValue[TOUCH_PORT])
 		{
 			stopAndKnock();
-			return;
 		}
 		else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
 		{
@@ -392,7 +424,17 @@ void driveWhileDropping(float dist, int mot_pow, bool &dropIndex, int &dominoCou
 			dropDomino(dropIndex, dominoCount);
 			setDriveTrainSpeed(mot_pow);
 			while((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-			{}
+			{
+				// check for break conditions
+				if(SensorValue[TOUCH_PORT])
+				{
+					stopAndKnock();
+				}
+				else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+				{
+					somethingInTheWay(mot_pow);
+				}
+			}
 		}
 	}
 }
@@ -407,7 +449,15 @@ void turnInPlace(int angle, int mot_pow)
 		motor[RIGHT_MOT_PORT] = -mot_pow;
 		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
 		{
-			int gyroDeg = getGyroDegrees(GYRO_PORT);
+			// check for break conditions
+			if(SensorValue[TOUCH_PORT])
+			{
+				stopAndKnock();
+			}
+			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+			{
+				somethingInTheWay(mot_pow, -mot_pow);
+			}
 		}
 	}
 	else if(angle > 0)
@@ -417,7 +467,15 @@ void turnInPlace(int angle, int mot_pow)
 		motor[RIGHT_MOT_PORT] = mot_pow;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
 		{
-			int gyroDeg = getGyroDegrees(GYRO_PORT);
+			// check for break conditions
+			if(SensorValue[TOUCH_PORT])
+			{
+				stopAndKnock();
+			}
+			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+			{
+				somethingInTheWay(-mot_pow, mot_pow);
+			}
 		}
 }
 
@@ -437,15 +495,36 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 		motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 		motor[RIGHT_MOT_PORT] = -speed;
 		nMotorEncoder(RIGHT_MOT_PORT) = 0;
+		nMotorEncoder(LEFT_MOT_PORT) = 0;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
 		{
-			if((int)(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			// check for break conditions
+			if(SensorValue[TOUCH_PORT])
+			{
+				stopAndKnock();
+			}
+			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+			{
+				somethingInTheWay(-speed*TURN_RATIO, -speed);
+			}
+
+			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 			{
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 				motor[RIGHT_MOT_PORT] = -speed;
-				while((int)(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-				{}
+				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				{
+					// check for break conditions
+					if(SensorValue[TOUCH_PORT])
+					{
+						stopAndKnock();
+					}
+					else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+					{
+						somethingInTheWay(-speed*TURN_RATIO, -speed);
+					}
+				}
 			}
 		}
 	}
@@ -457,13 +536,32 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 		nMotorEncoder(LEFT_MOT_PORT) = 0;
 		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
 		{
-			if((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			// check for break conditions
+			if(SensorValue[TOUCH_PORT])
+			{
+				stopAndKnock();
+			}
+			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+			{
+				somethingInTheWay(-speed, -speed*TURN_RATIO);
+			}
+			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 			{
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed;
 				motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
-				while((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-				{}
+				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				{
+					// check for break conditions
+					if(SensorValue[TOUCH_PORT])
+					{
+						stopAndKnock();
+					}
+					else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+					{
+						somethingInTheWay(-speed, -speed*TURN_RATIO);
+					}
+				}
 			}
 		}
 	}
@@ -485,7 +583,14 @@ void openDoor() // Henrique
 {
 	motor[DOOR_MOT_PORT] = DOOR_SPEED;
 	while (nMotorEncoder(DOOR_MOT_PORT)<DOOR_ANG)
-	{}
+	{
+		// check for break conditions
+		if(SensorValue[TOUCH_PORT])
+		{
+			motor[DOOR_MOT_PORT] = 0;
+			stopAndKnock();
+		}
+	}
 	motor[DOOR_MOT_PORT] = 0;
 }
 
@@ -495,7 +600,14 @@ void closeDoor() // Henrique
 	{
 		motor[DOOR_MOT_PORT] = -1*DOOR_SPEED;
 		while (nMotorEncoder(DOOR_MOT_PORT)>5)
-		{}
+		{
+			// check for break conditions
+			if(SensorValue[TOUCH_PORT])
+			{
+				motor[DOOR_MOT_PORT] = 0;
+				stopAndKnock();
+			}
+		}
 		motor[DOOR_MOT_PORT] = 0;
 	}
 }
