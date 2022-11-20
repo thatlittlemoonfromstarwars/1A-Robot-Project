@@ -169,7 +169,9 @@ def calcCenterPoint(new_point, rad, coords):
         cy =  py1u + k1u*v1y
         left_turn = True
 
-    return Point(cx,cy), left_turn
+    len_to_sub = calcLength(p2, Point(tx1,ty1))
+
+    return Point(cx,cy), left_turn, len_to_sub
 
 def main():
     # pygame specific instructions from https://stackoverflow.com/questions/19780411/pygame-drawing-a-rectangle
@@ -180,6 +182,7 @@ def main():
     WHITE = (255,255,255)
     BLUE = (0,0,255)
     prev_point = Point(0,0)
+    prev_len_to_sub = 0
     line_count = -1
     ANGLE_TOLERANCE = 20
     RADIUS_IN_PIXELS = 50
@@ -253,11 +256,20 @@ def main():
 
                         if line_count >= 1:
                             
-                            centCoord, left_turn = calcCenterPoint(new_point, RADIUS_IN_PIXELS, coords)
+                            centCoord, left_turn, len_to_sub = calcCenterPoint(new_point, RADIUS_IN_PIXELS, coords)
 
                             # determine whether robot should turn left or right
                             if left_turn:
                                 angle = -angle
+
+                            # subtract len_to_sub from overall length
+                            length -= (len_to_sub + prev_len_to_sub)
+
+                            if line_count == 1 and not instructs[len(instructs) - 1].if_ang:
+                                instructs[len(instructs) - 1].val -= len_to_sub
+                            
+                            prev_len_to_sub = len_to_sub
+
                             rect = Rect(centCoord.x-RADIUS_IN_PIXELS, centCoord.y-RADIUS_IN_PIXELS, RADIUS_IN_PIXELS*2, RADIUS_IN_PIXELS*2)
                             pygame.draw.arc(DISPLAY,BLUE,rect,0,2*math.pi, 1)
 
@@ -265,8 +277,10 @@ def main():
                     coords.append(new_point)
                     prev_point = new_point
                     instructs.append(Instr(True, angle))
-                    # TODO if length < 0 don't add
-                    instructs.append(Instr(False, length))
+
+                    if length > 0:
+                        instructs.append(Instr(False, length))
+
                     line_count += 1
                
         pygame.display.flip()
