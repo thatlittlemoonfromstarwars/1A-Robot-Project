@@ -47,7 +47,7 @@ void somethingInTheWay(int motor_power); // stops and informs the user to move t
 // calculation functions
 int distToDeg(float dist);
 float degToDist(int deg);
-int max(int value1, int value2);
+int average(int value1, int value2);
 
 // movement functions
 void setDriveTrainSpeed(int speed);
@@ -65,7 +65,7 @@ const int DOMINOS_AT_MAX_LOAD = 30;
 const int MAX_INSTR = 100;
 const float PIXELS_PER_CM = 15.0;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
-const int DIST_IN_FRONT_LIM = 5; // in cm
+const int DIST_IN_FRONT_LIM = 25; // in cm
 const float TURN_RAD = 30; //in cm - needs to be more than 6.75cm
 const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
@@ -166,18 +166,27 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 	int index2 = 0;
 	int sensor1 = 0;
 	int sensor2 = 0;
-	bool armPosLine = false;
+	//bool armPosLine = false;
 	int domino_Encoder_Spacing = distToDeg(DIST_BETWEEN_DOMINOS);
 
 	openDoor();
 
 	while(dominoCount>0)
 	{
- 		if((max(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT]))>domino_Encoder_Spacing)
+ 		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT]))>domino_Encoder_Spacing)
  		{
-			dropDomino(armPosLine, dominoCount);
+			dropDomino(dropIndex, dominoCount);
 			dominoCount--;
- 			armPosLine = !armPosLine;
+
+		/*	if(armPosLine == false)
+			{
+				armPosLine = true;
+			}
+			else
+			{
+				armPosLine = false;
+			}
+			*/
  			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
  		}
 
@@ -186,7 +195,7 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 		if(time1[T2] > index)
 		{
 			sensor1 = readMuxSensor(msensor_S1_1);
-			index = time1[T1] + MUX_WAIT;
+			index = time1[T2] + MUX_WAIT;
 
 			if(sensor1 == (int) colorBlack)
 			{
@@ -197,7 +206,7 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 		if(time1[T2] > index2)
 		{
 			sensor2 = readMuxSensor(msensor_S1_2);
-			index2 = time1[T1] + MUX_WAIT+ 5;
+			index2 = time1[T2] + MUX_WAIT+ 5;
 
 			if(sensor2 == (int) colorBlack)
 			{
@@ -205,12 +214,12 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 			}
 		}
 
-		if(SensorValue(TOUCH_PORT)==1)
+		if(SensorValue(TOUCH_PORT) == 1)
 		{
 			return;
 		}
 
-		if(SensorValue(ULTRASONIC_PORT) ==1)
+		if(SensorValue(ULTRASONIC_PORT) < DIST_IN_FRONT_LIM)
 		{
 			somethingInTheWay(0);
 		}
@@ -350,16 +359,9 @@ float degToDist(int deg)
 	return deg*PI*WHEEL_RAD/180;
 }
 
-int max(int value1, int value2)
+int average(int value1, int value2)
 {
-	if(value1>value2)
-	{
-		return value1;
-	}
-	else
-	{
-		return value2;
-	}
+	return (abs(value1 + value2)/2);
 }
 
 // ********************************** movement functions ***************************************************
