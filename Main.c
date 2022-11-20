@@ -47,7 +47,7 @@ void somethingInTheWay(int motor_power); // stops and informs the user to move t
 // calculation functions
 int distToDeg(float dist);
 float degToDist(int deg);
-int average(int value1, int value2);
+float average(int value1, int value2);
 
 // movement functions
 void setDriveTrainSpeed(int speed);
@@ -156,6 +156,7 @@ void endProgram()
 		if(SensorValue[TOUCH_PORT])
 			stopAndKnock();
 	}
+	stopAllTasks();
 }
 
 // ********************************** high level functions ************************************************
@@ -359,9 +360,9 @@ float degToDist(int deg)
 	return deg*PI*WHEEL_RAD/180;
 }
 
-int average(int value1, int value2)
+float average(int value1, int value2)
 {
-	return (abs(value1 + value2)/2);
+	return (abs(value1 + value2)/2.0);
 }
 
 // ********************************** movement functions ***************************************************
@@ -448,14 +449,15 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 		motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 		motor[RIGHT_MOT_PORT] = -speed;
 		nMotorEncoder(RIGHT_MOT_PORT) = 0;
+		nMotorEncoder(LEFT_MOT_PORT) = 0;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
 		{
-			if((int)(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 			{
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 				motor[RIGHT_MOT_PORT] = -speed;
-				while((int)(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 				{}
 			}
 		}
@@ -468,12 +470,12 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 		nMotorEncoder(LEFT_MOT_PORT) = 0;
 		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
 		{
-			if((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 			{
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed;
 				motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
-				while((int)(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 				{}
 			}
 		}
