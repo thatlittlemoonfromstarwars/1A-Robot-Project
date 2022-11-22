@@ -72,6 +72,7 @@ const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
 const int DOOR_SPEED = 10;
 const int MUX_WAIT = 10;
+const int dispenserSpeed = -30;
 
 const int TOUCH_PORT = S2;
 const int GYRO_PORT = S3;
@@ -168,7 +169,6 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
 	int index2 = 0;
 	int sensor1 = 0;
 	int sensor2 = 0;
-	//bool armPosLine = false;
 	int domino_Encoder_Spacing = distToDeg(DIST_BETWEEN_DOMINOS);
 
 	openDoor();
@@ -178,17 +178,6 @@ void followLine(bool &dropIndex, int &dominoCount) // Sean
  		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT]))>domino_Encoder_Spacing)
  		{
 			dropDomino(dropIndex, dominoCount);
-			dominoCount--;
-
-		/*	if(armPosLine == false)
-			{
-				armPosLine = true;
-			}
-			else
-			{
-				armPosLine = false;
-			}
-			*/
  			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
  		}
 
@@ -313,7 +302,7 @@ void dropDomino(bool &dropIndex, int &dominoCount) // Henrique
 	closeDoor();
 	if (!dropIndex)
 	{
-		motor[DISPENSER_MOT_PORT] = -15;
+		motor[DISPENSER_MOT_PORT] = dispenserSpeed;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > -325)
 		{}
 		motor[DISPENSER_MOT_PORT] = 0;
@@ -321,7 +310,7 @@ void dropDomino(bool &dropIndex, int &dominoCount) // Henrique
 	}
 	else
 	{
-		motor[DISPENSER_MOT_PORT] = -15;
+		motor[DISPENSER_MOT_PORT] = dispenserSpeed;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > -550)
 		{}
 		motor[DISPENSER_MOT_PORT]= 0;
@@ -329,7 +318,7 @@ void dropDomino(bool &dropIndex, int &dominoCount) // Henrique
 		dropIndex = false;
 		wait1Msec(100);
 
-		motor[DISPENSER_MOT_PORT] = 15;
+		motor[DISPENSER_MOT_PORT] = -dispenserSpeed;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) < 100)
 		{}
 		motor[DISPENSER_MOT_PORT] = 0;
