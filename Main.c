@@ -494,7 +494,6 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 		// turn Right
 		motor[LEFT_MOT_PORT] = -speed;
 		motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
-		nMotorEncoder(RIGHT_MOT_PORT) = 0;
 		nMotorEncoder(LEFT_MOT_PORT) = 0;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
 		{
@@ -508,23 +507,12 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 				somethingInTheWay(-speed, -speed*TURN_RATIO);
 			}
 
-			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			if(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))) >= DIST_BETWEEN_DOMINOS)
 			{
+				nMotorEncoder(LEFT_MOT_PORT) = 0;
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed;
 				motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
-				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-				{
-					// check for break conditions
-					if(SensorValue[TOUCH_PORT])
-					{
-						stopAndKnock();
-					}
-					else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
-					{
-						somethingInTheWay(-speed, -speed*TURN_RATIO);
-					}
-				}
 			}
 		}
 	}
@@ -533,7 +521,7 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 		// turn left
 		motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 		motor[RIGHT_MOT_PORT] = -speed;
-		nMotorEncoder(LEFT_MOT_PORT) = 0;
+		nMotorEncoder(RIGHT_MOT_PORT) = 0;
 		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
 		{
 			// check for break conditions
@@ -545,23 +533,12 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 			{
 				somethingInTheWay(-speed*TURN_RATIO, -speed);
 			}
-			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			if(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))) >= DIST_BETWEEN_DOMINOS)
 			{
+				nMotorEncoder(RIGHT_MOT_PORT) = 0;
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 				motor[RIGHT_MOT_PORT] = -speed;
-				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-				{
-					// check for break conditions
-					if(SensorValue[TOUCH_PORT])
-					{
-						stopAndKnock();
-					}
-					else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
-					{
-						somethingInTheWay(-speed*TURN_RATIO, -speed);
-					}
-				}
 			}
 		}
 	}
