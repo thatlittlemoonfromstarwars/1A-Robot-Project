@@ -64,7 +64,7 @@ void closeDoor();
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 30;
 const int MAX_INSTR = 100;
-const float PIXELS_PER_CM = 15.0;
+const float PIXELS_PER_CM = 7.0;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const int DIST_IN_FRONT_LIM = 25; // in cm
 const float TURN_RAD = 30; //in cm - needs to be more than 6.75cm
@@ -267,7 +267,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 		else
 		{
 			// drive length
-			driveWhileDropping(allInstr[instr_index].val/PIXELS_PER_CM, 50, dropIndex, dominoCount);
+			driveWhileDropping(allInstr[instr_index].val/PIXELS_PER_CM, 30, dropIndex, dominoCount);
 		}
 		instr_index++;
 	}
@@ -503,8 +503,8 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 	if(angle > 0)
 	{
 		// turn Right
-		motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
-		motor[RIGHT_MOT_PORT] = -speed;
+		motor[LEFT_MOT_PORT] = -speed;
+		motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
 		nMotorEncoder(RIGHT_MOT_PORT) = 0;
 		nMotorEncoder(LEFT_MOT_PORT) = 0;
 		while(getGyroDegrees(GYRO_PORT) < initialGyro+angle)
@@ -516,46 +516,9 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 			}
 			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
 			{
-				somethingInTheWay(-speed*TURN_RATIO, -speed);
-			}
-
-			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-			{
-				dropDomino(dropIndex, dominoCount);
-				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
-				motor[RIGHT_MOT_PORT] = -speed;
-				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
-				{
-					// check for break conditions
-					if(SensorValue[TOUCH_PORT])
-					{
-						stopAndKnock();
-					}
-					else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
-					{
-						somethingInTheWay(-speed*TURN_RATIO, -speed);
-					}
-				}
-			}
-		}
-	}
-	else if(angle < 0)
-	{
-		// turn left
-		motor[LEFT_MOT_PORT] = -speed;
-		motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
-		nMotorEncoder(LEFT_MOT_PORT) = 0;
-		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
-		{
-			// check for break conditions
-			if(SensorValue[TOUCH_PORT])
-			{
-				stopAndKnock();
-			}
-			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
-			{
 				somethingInTheWay(-speed, -speed*TURN_RATIO);
 			}
+
 			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
 			{
 				dropDomino(dropIndex, dominoCount);
@@ -571,6 +534,43 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 					else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
 					{
 						somethingInTheWay(-speed, -speed*TURN_RATIO);
+					}
+				}
+			}
+		}
+	}
+	else if(angle < 0)
+	{
+		// turn left
+		motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
+		motor[RIGHT_MOT_PORT] = -speed;
+		nMotorEncoder(LEFT_MOT_PORT) = 0;
+		while(getGyroDegrees(GYRO_PORT) > initialGyro+angle)
+		{
+			// check for break conditions
+			if(SensorValue[TOUCH_PORT])
+			{
+				stopAndKnock();
+			}
+			else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+			{
+				somethingInTheWay(-speed*TURN_RATIO, -speed);
+			}
+			if((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+			{
+				dropDomino(dropIndex, dominoCount);
+				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
+				motor[RIGHT_MOT_PORT] = -speed;
+				while((int)(degToDist(average(abs(nMotorEncoder(RIGHT_MOT_PORT)),abs(nMotorEncoder(RIGHT_MOT_PORT)))*100)%((int)(DIST_BETWEEN_DOMINOS*100)) == 0))
+				{
+					// check for break conditions
+					if(SensorValue[TOUCH_PORT])
+					{
+						stopAndKnock();
+					}
+					else if(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
+					{
+						somethingInTheWay(-speed*TURN_RATIO, -speed);
 					}
 				}
 			}
