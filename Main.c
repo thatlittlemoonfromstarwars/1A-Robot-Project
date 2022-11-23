@@ -210,6 +210,7 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 				}
 			}
 		}
+		somethingInTheWay(0);
 	}
 	endProgram();
 }
