@@ -183,6 +183,7 @@ def main():
     BLUE = (0,0,255)
     prev_point = Point(0,0)
     prev_len_to_sub = 0
+    ang1 = 0
     line_count = -1
     ANGLE_TOLERANCE = 20
     RADIUS_IN_PIXELS = 50
@@ -231,9 +232,15 @@ def main():
 
                 if line_count == -1:
                     angle = math.degrees(math.atan2(new_point.y,new_point.x))
+                    ang1 = angle
 
                 elif line_count == 0:
                     angle = getAngle(new_point, prev_point, Point(0,0), prev_point)
+                    
+                    # check if angle is negative
+                    ang2 = math.degrees(math.atan2(new_point.y,new_point.x))
+                    if ang2 < ang1:
+                        angle = -angle
                     
                 else:
                     # check if new line lintersects with any other line
