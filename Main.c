@@ -178,7 +178,7 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 
 	while(domino_count>0)
 	{
- 		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT])) > drop_index)
+ 		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT])) > domino_encoder_spacing)
  		{
 			dropDomino(drop_index, domino_count);
  			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
@@ -530,7 +530,7 @@ void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count
 			if(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))) >= DIST_BETWEEN_DOMINOS)
 			{
 				nMotorEncoder(RIGHT_MOT_PORT) = 0;
-				dropDomino(drop_index, all_instr);
+				dropDomino(drop_index, domino_count);
 				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 				motor[RIGHT_MOT_PORT] = -speed;
 				//wait1Msec(100); // potentially broken
