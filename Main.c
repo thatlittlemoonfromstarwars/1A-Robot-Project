@@ -70,7 +70,7 @@ const int DIST_IN_FRONT_LIM = 25; // in cm
 const float TURN_RAD = 30; //in cm - needs to be more than 6.75cm
 const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
-const int DOOR_SPEED = 70;
+const int DOOR_SPEED = 50;
 const int MUX_WAIT = 10;
 const int DISPENSER_SPEED = -30;
 const int DISPENSER_POS0 = 50;
@@ -178,39 +178,40 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 
 	while((domino_count>0)&&((TOUCH_PORT) == 1))
 	{
-		while(SensorValue[ULTRASONIC_PORT] < (DIST_IN_FRONT_LIM))
+		if((SensorValue[ULTRASONIC_PORT]) < (DIST_IN_FRONT_LIM))
 		{
-	 		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT])) > domino_encoder_spacing)
-	 		{
-				dropDomino(drop_index, domino_count);
-	 			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
-	 		}
+			somethingInTheWay(0);
+		}
 
-			motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -10;
+	 	if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT])) > domino_encoder_spacing)
+		{
+			dropDomino(drop_index, domino_count);
+ 			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
+	 	}
 
-			if(time1[T2] > index)
+		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -10;
+
+		if(time1[T2] > index)
+		{
+			sensor1 = readMuxSensor(msensor_S1_1);
+			index = time1[T2] + MUX_WAIT;
+
+			if(sensor1 == (int) colorBlack)
 			{
-				sensor1 = readMuxSensor(msensor_S1_1);
-				index = time1[T2] + MUX_WAIT;
-
-				if(sensor1 == (int) colorBlack)
-				{
-					motor[RIGHT_MOT_PORT] = 0;
-				}
-			}
-
-			if(time1[T2] > index2)
-			{
-				sensor2 = readMuxSensor(msensor_S1_2);
-				index2 = time1[T2] + MUX_WAIT+ 5;
-
-				if(sensor2 == (int) colorBlack)
-				{
-					motor[LEFT_MOT_PORT] = 0;
-				}
+				motor[RIGHT_MOT_PORT] = 0;
 			}
 		}
-		somethingInTheWay(0);
+
+		if(time1[T2] > index2)
+		{
+			sensor2 = readMuxSensor(msensor_S1_2);
+			index2 = time1[T2] + MUX_WAIT+ 5;
+
+			if(sensor2 == (int) colorBlack)
+			{
+				motor[LEFT_MOT_PORT] = 0;
+			}
+		}
 	}
 	endProgram();
 }
