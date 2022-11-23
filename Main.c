@@ -235,7 +235,7 @@ void followPathFromFile(bool &dropIndex, int &dominoCount) // Andor
 		if(allInstr[instr_index].is_ang)
 		{
 			num_turns++;
-			turnInPlace(allInstr[instr_index].val, 25);
+			turnInPlace(allInstr[instr_index].val, 20);
 		}
 		else
 		{
@@ -513,6 +513,7 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed;
 				motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
+				wait1Msec(100); // potentially broken
 			}
 		}
 	}
@@ -539,6 +540,7 @@ void turnWhileDropping(int angle, int speed, bool &dropIndex, int &dominoCount)
 				dropDomino(dropIndex, dominoCount);
 				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 				motor[RIGHT_MOT_PORT] = -speed;
+				wait1Msec(100); // potentially broken
 			}
 		}
 	}
