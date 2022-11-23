@@ -176,46 +176,39 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 
 	openDoor();
 
-	while(domino_count>0)
+	while((domino_count>0)&&((TOUCH_PORT) == 1))
 	{
- 		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT])) > domino_encoder_spacing)
- 		{
-			dropDomino(drop_index, domino_count);
- 			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
- 		}
-
-		motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -10;
-
-		if(time1[T2] > index)
+		while((ULTRASONIC_PORT) < (DIST_IN_FRONT_LIM))
 		{
-			sensor1 = readMuxSensor(msensor_S1_1);
-			index = time1[T2] + MUX_WAIT;
+	 		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT])) > domino_encoder_spacing)
+	 		{
+				dropDomino(drop_index, domino_count);
+	 			nMotorEncoder[RIGHT_MOT_PORT] = nMotorEncoder[LEFT_MOT_PORT] = 0;
+	 		}
 
-			if(sensor1 == (int) colorBlack)
+			motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -10;
+
+			if(time1[T2] > index)
 			{
-				motor[RIGHT_MOT_PORT] = 0;
+				sensor1 = readMuxSensor(msensor_S1_1);
+				index = time1[T2] + MUX_WAIT;
+
+				if(sensor1 == (int) colorBlack)
+				{
+					motor[RIGHT_MOT_PORT] = 0;
+				}
 			}
-		}
 
-		if(time1[T2] > index2)
-		{
-			sensor2 = readMuxSensor(msensor_S1_2);
-			index2 = time1[T2] + MUX_WAIT+ 5;
-
-			if(sensor2 == (int) colorBlack)
+			if(time1[T2] > index2)
 			{
-				motor[LEFT_MOT_PORT] = 0;
+				sensor2 = readMuxSensor(msensor_S1_2);
+				index2 = time1[T2] + MUX_WAIT+ 5;
+
+				if(sensor2 == (int) colorBlack)
+				{
+					motor[LEFT_MOT_PORT] = 0;
+				}
 			}
-		}
-
-		if(SensorValue(TOUCH_PORT) == 1)
-		{
-			return;
-		}
-
-		if(SensorValue(ULTRASONIC_PORT) < DIST_IN_FRONT_LIM)
-		{
-			somethingInTheWay(0);
 		}
 	}
 	endProgram();
