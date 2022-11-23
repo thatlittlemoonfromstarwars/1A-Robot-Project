@@ -178,7 +178,7 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 
 	while((domino_count>0)&&((TOUCH_PORT) == 1))
 	{
-		while((ULTRASONIC_PORT) < (DIST_IN_FRONT_LIM))
+		while(SensorValue[ULTRASONIC_PORT] < (DIST_IN_FRONT_LIM))
 		{
 	 		if((average(nMotorEncoder[RIGHT_MOT_PORT],nMotorEncoder[LEFT_MOT_PORT])) > domino_encoder_spacing)
 	 		{
