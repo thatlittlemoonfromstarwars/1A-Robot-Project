@@ -302,7 +302,13 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 	{
 		motor[DISPENSER_MOT_PORT] = DISPENSER_SPEED;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > DISPENSER_POS1)
-		{}
+		{
+			if(SensorValue[TOUCH_PORT])
+			{
+				motor[DISPENSER_MOT_PORT] = 0;
+				stopAndKnock();
+			}
+		}
 		motor[DISPENSER_MOT_PORT] = 0;
 		drop_index = true;
 	}
@@ -310,7 +316,13 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 	{
 		motor[DISPENSER_MOT_PORT] = DISPENSER_SPEED;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > DISPENSER_POS2)
-		{}
+		{
+			if(SensorValue[TOUCH_PORT])
+			{
+				motor[DISPENSER_MOT_PORT] = 0;
+				stopAndKnock();
+			}
+		}
 		motor[DISPENSER_MOT_PORT]= 0;
 
 		drop_index = false;
@@ -318,7 +330,13 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 
 		motor[DISPENSER_MOT_PORT] = -DISPENSER_SPEED;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) < DISPENSER_POS0)
-		{}
+		{
+			if(SensorValue[TOUCH_PORT])
+			{
+				motor[DISPENSER_MOT_PORT] = 0;
+				stopAndKnock();
+			}
+		}
 		motor[DISPENSER_MOT_PORT] = 0;
 	}
 	wait1Msec(700);
