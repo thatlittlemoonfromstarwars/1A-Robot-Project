@@ -235,7 +235,7 @@ def main():
                     ang1 = angle
 
                 elif line_count == 0:
-                    angle = getAngle(new_point, prev_point, Point(0,0), prev_point)
+                    angle = 180-getAngle(new_point, prev_point, Point(0,0), prev_point)
                     
                     # check if angle is negative
                     ang2 = math.degrees(math.atan2(new_point.y,new_point.x))
