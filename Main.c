@@ -2,7 +2,7 @@
 Domino layer path follower
 Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 
-v1.3
+v1.5
 
 Assumptions:
 - more than 3 instructions will be in instruction file
@@ -70,7 +70,7 @@ const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
 const float DIST_BET_DOM_TURNING = 5.5; // in cm
 const int DRIVE_SPEED = 20; // for path from file mode
 const int DIST_IN_FRONT_LIM = 20; // in cm
-const float TURN_RAD = 20; //in cm - needs to be more than 6.75cm
+const float TURN_RAD = 20; // in cm - needs to be more than 6.75cm
 const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
 const int DOOR_SPEED = 50;
@@ -184,8 +184,9 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 
 	openDoor();
 
-	while((domino_count>0)&&((TOUCH_PORT) == 1))
+	while((domino_count>0)&&(SensorValue(TOUCH_PORT) == 0))
 	{
+
 		if((SensorValue[ULTRASONIC_PORT]) < (DIST_IN_FRONT_LIM))
 		{
 			somethingInTheWay(0);
@@ -213,7 +214,7 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 		if(time1[T2] > index2)
 		{
 			sensor2 = readMuxSensor(msensor_S1_2);
-			index2 = time1[T2] + MUX_WAIT+ 5;
+			index2 = time1[T2] + MUX_WAIT + 5;
 
 			if(sensor2 == (int) colorBlack)
 			{
