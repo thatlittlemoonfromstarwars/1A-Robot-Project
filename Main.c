@@ -14,16 +14,14 @@ C - gate motor
 D - right drive wheel
 
 Sensor Ports:
-1 - color(Mux)
+1 - color
 2 - gyro
 3 - touch
 4 - ultrasonic
 
 */
 
-#include "PC_FileIO.c"
-#include "mindsensors-ev3smux.h"
-#include "UW_sensorMux.c"
+#include "PC_FileIO.c";
 
 typedef struct
 {
@@ -49,6 +47,7 @@ void somethingInTheWay (int left_mot_pow, int right_mot_pow);
 int distToDeg(float dist);
 float degToDist(int deg);
 float average(int value1, int value2);
+
 
 // movement functions
 void setDriveTrainSpeed(int speed);
@@ -121,22 +120,9 @@ void configureAllSensors()
 	wait1Msec(50);
 	SensorMode[GYRO_PORT] = modeEV3Gyro_Calibration;
 	wait1Msec(50);
-	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
-	wait1Msec(50);
-	SensorType[S1] = sensorEV3_GenericI2C;
+	SensorMode[COLOR_PORT] = modeEV3Color_Color;
 	wait1Msec(100);
-
-	if (!initSensorMux(msensor_S1_1, colorMeasureColor))
-	{
-		displayString(2,"Failed to configure colour1");
-		return;
-	}
-	wait1Msec(50);
-	if (!initSensorMux(msensor_S1_2, colorMeasureColor))
-	{
-		displayString(4,"Failed to configure colour2");
-		return;
-	}
+	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
 	wait1Msec(50);
 }
 
