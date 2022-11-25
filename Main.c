@@ -22,6 +22,8 @@ Sensor Ports:
 */
 
 #include "PC_FileIO.c";
+#include "mindsensors-ev3smux.h"
+#include "UW_sensorMux.c"
 
 typedef struct
 {
