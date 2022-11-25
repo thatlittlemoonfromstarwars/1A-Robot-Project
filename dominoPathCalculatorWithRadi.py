@@ -186,7 +186,9 @@ def main():
     ang1 = 0
     line_count = -1
     ANGLE_TOLERANCE = 20
-    RADIUS_IN_PIXELS = 50
+    RADIUS_IN_CM = 20
+    PIXELS_PER_CM = 5
+    RADIUS_IN_PIXELS = RADIUS_IN_CM*PIXELS_PER_CM
     coords = [] # stores coordinates as point values
     instructs = [] # stores instructions for robot
 
