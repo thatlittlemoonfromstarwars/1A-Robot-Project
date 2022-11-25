@@ -14,16 +14,14 @@ C - gate motor
 D - right drive wheel
 
 Sensor Ports:
-1 - color(Mux)
+1 - color
 2 - gyro
 3 - touch
 4 - ultrasonic
 
 */
 
-#include "PC_FileIO.c"
-#include "mindsensors-ev3smux.h"
-#include "UW_sensorMux.c"
+#include "PC_FileIO.c";
 
 typedef struct
 {
@@ -49,6 +47,7 @@ void somethingInTheWay (int left_mot_pow, int right_mot_pow);
 int distToDeg(float dist);
 float degToDist(int deg);
 float average(int value1, int value2);
+
 
 // movement functions
 void setDriveTrainSpeed(int speed);
