@@ -264,7 +264,7 @@ def main():
                         pygame.draw.aaline(DISPLAY, BLUE, (prev_point.x, prev_point.y), (new_point.x, new_point.y))
 
                         if line_count >= 1:
-                            
+                            angle = 180-angle
                             centCoord, left_turn, len_to_sub = calcCenterPoint(new_point, RADIUS_IN_PIXELS, coords)
 
                             # determine whether robot should turn left or right
@@ -285,7 +285,7 @@ def main():
                         pygame.display.flip()
                     coords.append(new_point)
                     prev_point = new_point
-                    instructs.append(Instr(True, angle))
+                    instructs.append(Instr(True,angle))
 
                     if length > 0:
                         instructs.append(Instr(False, length))

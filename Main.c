@@ -14,7 +14,7 @@ C - gate motor
 D - right drive wheel
 
 Sensor Ports:
-1 - color
+1 - MUX
 2 - gyro
 3 - touch
 4 - ultrasonic
@@ -77,9 +77,9 @@ const int DOOR_SPEED = 50;
 const int DROP_WAIT = 500; // in milliseconds
 const int MUX_WAIT = 10;
 const int DISPENSER_SPEED = -30;
-const int DISPENSER_POS0 = 60;
-const int DISPENSER_POS1 = -350;
-const int DISPENSER_POS2 = -510;
+const int DISPENSER_POS0 = 80;
+const int DISPENSER_POS1 = -370;
+const int DISPENSER_POS2 = -530;
 const int KNOCK_SPEED = -15;
 
 // port assignments
@@ -221,6 +221,10 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 				motor[LEFT_MOT_PORT] = 0;
 			}
 		}
+	}
+	if(SensorValue(TOUCH_PORT))
+	{
+		stopAndKnock();
 	}
 	endProgram();
 }
