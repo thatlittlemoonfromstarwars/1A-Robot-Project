@@ -14,16 +14,14 @@ C - gate motor
 D - right drive wheel
 
 Sensor Ports:
-1 - color(Mux)
+1 - color
 2 - gyro
 3 - touch
 4 - ultrasonic
 
 */
 
-#include "PC_FileIO.c"
-#include "mindsensors-ev3smux.h"
-#include "UW_sensorMux.c"
+#include "PC_FileIO.c";
 
 typedef struct
 {
@@ -33,7 +31,7 @@ typedef struct
 } Instr;
 
 // one-time functions
-void configureAllSensors();
+void configureAllSensors(bool mode);
 bool selectMode();
 void endProgram();
 
@@ -50,12 +48,13 @@ int distToDeg(float dist);
 float degToDist(int deg);
 float average(int value1, int value2);
 
+
 // movement functions
 void setDriveTrainSpeed(int speed);
 void driveDist(float dist,int mot_pow);
-void driveWhileDropping(float dist, int mot_pow, bool &drop_index, int &domino_count); // Andor
+void driveWhileDropping(float dist, int mot_pow, bool &drop_index, int &domino_count, float &dist_since_last_dom); // Andor
 void turnInPlace(int angle, int mot_pow);
-void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count); // Andor
+void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count, float &dist_since_last_dom); // Andor
 void stopAndKnock(); // Josh
 void openDoor();
 void closeDoor();
@@ -64,23 +63,27 @@ void closeDoor();
 const float WHEEL_RAD = 2.75; // in cm
 const int DOMINOS_AT_MAX_LOAD = 30;
 const int MAX_INSTR = 100;
-const float PIXELS_PER_CM = 7.0;
+const float PIXELS_PER_CM = 5.0;
 const float DIST_BETWEEN_DOMINOS = 3.75; // in cm
-const int DIST_IN_FRONT_LIM = 25; // in cm
-const float TURN_RAD = 30; //in cm - needs to be more than 6.75cm
+const float DIST_BET_DOM_TURNING = 5.5; // in cm
+const int DRIVE_SPEED = 20; // for path from file mode
+const int DIST_IN_FRONT_LIM = 20; // in cm
+const float TURN_RAD = 20; //in cm - needs to be more than 6.75cm
 const int TIME_TO_PRESS = 10; // in seconds
 const int DOOR_ANG = 90; // degrees
 const int DOOR_SPEED = 50;
+const int DROP_WAIT = 500; // in milliseconds
 const int MUX_WAIT = 10;
 const int DISPENSER_SPEED = -30;
-const int DISPENSER_POS0 = 50;
+const int DISPENSER_POS0 = 60;
 const int DISPENSER_POS1 = -350;
-const int DISPENSER_POS2 = -490;
-const int KNOCK_SPEED = -30;
+const int DISPENSER_POS2 = -510;
+const int KNOCK_SPEED = -15;
 
+// port assignments
 const int TOUCH_PORT = S2;
 const int GYRO_PORT = S3;
-const int COLOR_PORT = S1;
+const int MULTIPLEXER_PORT = S1;
 const int ULTRASONIC_PORT = S4;
 
 const int RIGHT_MOT_PORT = motorD;
@@ -90,7 +93,6 @@ const int DISPENSER_MOT_PORT = motorC;
 
 task main()
 {
-	configureAllSensors();
 	// initialization for domino dropping
 	nMotorEncoder(DISPENSER_MOT_PORT) = 0;
 	nMotorEncoder(DOOR_MOT_PORT) = 0;
@@ -108,12 +110,10 @@ task main()
 }
 
 //  ********************************** one-time functions *********************************************
-void configureAllSensors()
+void configureAllSensors(bool mode)
 {
 	SensorType[TOUCH_PORT] = sensorEV3_Touch;
 	SensorType[GYRO_PORT] = sensorEV3_Gyro;
-	wait1Msec(50);
-	SensorType[COLOR_PORT] = sensorEV3_Color;
 	wait1Msec(50);
 	SensorType[ULTRASONIC_PORT] = sensorEV3_Ultrasonic;
 	wait1Msec(50);
@@ -121,21 +121,24 @@ void configureAllSensors()
 	wait1Msec(50);
 	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
 	wait1Msec(50);
-	SensorType[S1] = sensorEV3_GenericI2C;
-	wait1Msec(100);
+	if(!mode)
+	{
+		SensorType[MULTIPLEXER_PORT] = sensorEV3_GenericI2C;
+		wait1Msec(100);
 
-	if (!initSensorMux(msensor_S1_1, colorMeasureColor))
-	{
-		displayString(2,"Failed to configure colour1");
-		return;
+		if (!initSensorMux(msensor_S1_1, colorMeasureColor))
+		{
+			displayString(2,"Failed to configure colour1");
+			return;
+		}
+		wait1Msec(50);
+		if (!initSensorMux(msensor_S1_2, colorMeasureColor))
+		{
+			displayString(4,"Failed to configure colour2");
+			return;
+		}
+		wait1Msec(50);
 	}
-	wait1Msec(50);
-	if (!initSensorMux(msensor_S1_2, colorMeasureColor))
-	{
-		displayString(4,"Failed to configure colour2");
-		return;
-	}
-	wait1Msec(50);
 }
 
 bool selectMode()
@@ -149,7 +152,10 @@ bool selectMode()
 
 	// returns true if buttonRight is pressed (path from file mode)
 	// returns false if buttonLeft is pressed (line follow mode)
-	return getButtonPress(buttonRight);
+	bool mode = getButtonPress(buttonRight);
+	configureAllSensors(mode);
+	wait1Msec(700);
+	return mode;
 }
 
 void endProgram()
@@ -221,6 +227,7 @@ void followPathFromFile(bool &drop_index, int &domino_count) // Andor
 	// TODO add break conditions to this function
 	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
 	Instr all_instr[MAX_INSTR];
+	float dist_since_last_dom = 0;
 
 	int num_instr = getInstrFromFile(all_instr);
 
@@ -249,12 +256,12 @@ void followPathFromFile(bool &drop_index, int &domino_count) // Andor
 		if(all_instr[instr_index].is_ang)
 		{
 			// turn
-			turnWhileDropping(all_instr[instr_index].val, 20, drop_index, domino_count);
+			turnWhileDropping(all_instr[instr_index].val, DRIVE_SPEED, drop_index, domino_count, dist_since_last_dom);
 		}
 		else
 		{
 			// drive length
-			driveWhileDropping(all_instr[instr_index].val/PIXELS_PER_CM, 30, drop_index, domino_count);
+			driveWhileDropping(all_instr[instr_index].val/PIXELS_PER_CM, DRIVE_SPEED, drop_index, domino_count, dist_since_last_dom);
 		}
 		instr_index++;
 	}
@@ -311,6 +318,7 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 		}
 		motor[DISPENSER_MOT_PORT] = 0;
 		drop_index = true;
+		wait1Msec(DROP_WAIT);
 	}
 	else
 	{
@@ -339,7 +347,6 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 		}
 		motor[DISPENSER_MOT_PORT] = 0;
 	}
-	wait1Msec(700);
 	openDoor();
 	domino_count--;
 	// continue line or path follow after
@@ -418,7 +425,7 @@ void driveDist(float dist, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-void driveWhileDropping(float dist, int mot_pow, bool &drop_index, int &domino_count)
+void driveWhileDropping(float dist, int mot_pow, bool &drop_index, int &domino_count, float &dist_since_last_dom)
 {
 	setDriveTrainSpeed(mot_pow);
 	nMotorEncoder[LEFT_MOT_PORT] = 0;
@@ -436,13 +443,15 @@ void driveWhileDropping(float dist, int mot_pow, bool &drop_index, int &domino_c
 		}
 
 		// drop domino every DIST_BETWEEN_DOMINOS
-		if(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))) >= DIST_BETWEEN_DOMINOS)
+		if(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))) + dist_since_last_dom >= DIST_BETWEEN_DOMINOS)
 		{
+			dist_since_last_dom = 0;
 			nMotorEncoder(RIGHT_MOT_PORT) = 0;
 			dropDomino(drop_index, domino_count);
 			setDriveTrainSpeed(mot_pow);
 		}
 	}
+	dist_since_last_dom = degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT)));
 }
 
 void turnInPlace(int angle, int mot_pow)
@@ -488,12 +497,11 @@ void turnInPlace(int angle, int mot_pow)
 	setDriveTrainSpeed(0);
 }
 
-void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count)
+void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count, float &dist_since_last_dom)
 {
 	// https://math.stackexchange.com/questions/4310012/calculate-the-turning-radius-turning-circle-of-a-two-wheeled-car
 
 	float const TURN_RATIO = (TURN_RAD-13.5)/TURN_RAD;
-
 	int initialGyro = getGyroDegrees(GYRO_PORT);
 	if(angle > 0)
 	{
@@ -513,15 +521,16 @@ void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count
 				somethingInTheWay(-speed, -speed*TURN_RATIO);
 			}
 
-			if(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))) >= DIST_BETWEEN_DOMINOS)
+			if(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))) + dist_since_last_dom >= DIST_BET_DOM_TURNING)
 			{
+				dist_since_last_dom = 0;
 				nMotorEncoder(LEFT_MOT_PORT) = 0;
 				dropDomino(drop_index, domino_count);
 				motor[LEFT_MOT_PORT] = -speed;
 				motor[RIGHT_MOT_PORT] = -speed*TURN_RATIO;
-				//wait1Msec(100); // potentially broken
 			}
 		}
+		dist_since_last_dom = degToDist(abs(nMotorEncoder(LEFT_MOT_PORT)));
 	}
 	else if(angle < 0)
 	{
@@ -540,15 +549,16 @@ void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count
 			{
 				somethingInTheWay(-speed*TURN_RATIO, -speed);
 			}
-			if(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))) >= DIST_BETWEEN_DOMINOS)
+			if(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))) + dist_since_last_dom >= DIST_BET_DOM_TURNING)
 			{
+				dist_since_last_dom = 0;
 				nMotorEncoder(RIGHT_MOT_PORT) = 0;
 				dropDomino(drop_index, domino_count);
 				motor[LEFT_MOT_PORT] = -speed*TURN_RATIO;
 				motor[RIGHT_MOT_PORT] = -speed;
-				//wait1Msec(100); // potentially broken
 			}
 		}
+		dist_since_last_dom = degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT)));
 	}
 }
 
