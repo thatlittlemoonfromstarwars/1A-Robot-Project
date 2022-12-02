@@ -1,5 +1,5 @@
 /*
-Waterloo Engineering Expeller of Dominos Main Program
+Waterloo Engineering Expeller of Dominoes Main Program
 
 Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 

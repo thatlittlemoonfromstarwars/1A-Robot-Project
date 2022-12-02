@@ -1,8 +1,13 @@
+# Path calculator for Waterloo Engineering Expeller of Dominoes
+
+# Andor Siegers
+
+# v1.2
+
 import math
 import sys
 import pygame
 from pygame.locals import *
-
 
 class Point:
 
@@ -56,8 +61,7 @@ def orientation(p, q, r):
 		# Collinear orientation
 		return 0
 
-# The main function that returns true if
-# the line segment 'p1q1' and 'p2q2' intersect.
+# returns true if the line segment 'p1q1' and 'p2q2' intersect
 def doIntersect(p1,q1,p2,q2):
 	
 	# Find the 4 orientations required for
@@ -92,9 +96,11 @@ def doIntersect(p1,q1,p2,q2):
 	# If none of the cases
 	return False
 
+# returns dot product
 def dot(vA, vB):
     return vA[0]*vB[0]+vA[1]*vB[1]
 
+# returns line length
 def calcLength(p1, p2):
     return math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
 
@@ -120,8 +126,9 @@ def getAngle(p1,p2,p3,p4):
     ang_deg = math.degrees(angle)%360
     return ang_deg
     
-# calculate the center point of a circle tangent to lines forming an angle
+# calculate the center point of a circle tangent to 2 lines forming an angle
 def calcCenterPoint(new_point, rad, coords):
+    # from:
     # https://stackoverflow.com/questions/51223685/create-circle-tangent-to-two-lines-with-radius-r-geometry
     
     p1 = coords[len(coords) - 2]
@@ -169,12 +176,14 @@ def calcCenterPoint(new_point, rad, coords):
         cy =  py1u + k1u*v1y
         left_turn = True
 
+    # subtracts length taken from the arc from line lengths
     len_to_sub = calcLength(p2, Point(tx1,ty1))
 
     return Point(cx,cy), left_turn, len_to_sub
 
 def main():
-    # pygame specific instructions from https://stackoverflow.com/questions/19780411/pygame-drawing-a-rectangle
+    # pygame specific instructions from:
+    # https://stackoverflow.com/questions/19780411/pygame-drawing-a-rectangle
     pygame.init()
 
     DISPLAY = pygame.display.set_mode((700,500),0,32)
@@ -201,27 +210,26 @@ def main():
                 # before program ends
                 file = open('instr.txt', 'w')
                 try:
-                    # write to file
+                    # save instructions to file
                     file.write(str(len(instructs)) + "\n")
-                    for i in range(len(instructs)):
 
+                    for i in range(len(instructs)):
                         file.write(str((int)(instructs[i].if_ang)) + " " + str((int)(instructs[i].val)))
                         if i != len(instructs)-1:
                             file.write("\n")
-                    
-                        
+                     
                 except:
                     print("Unable to open file")
                 
-                file.close()
-                    
+                file.close() 
                 pygame.quit()
                 sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # when mouse is pressed
                 x,y = pygame.mouse.get_pos()
                 new_point = Point(x,y)
-                # check for double click
+                # check for double click and continue if it is to avoid instructions with length 0
                 if(new_point.x == prev_point.x and new_point.y == prev_point.y):
                     continue
                 legal_line = True
@@ -233,10 +241,12 @@ def main():
                 length = calcLength(new_point, prev_point)
 
                 if line_count == -1:
+                    # calculate very first angle to turn
                     angle = math.degrees(math.atan2(new_point.y,new_point.x))
                     ang1 = angle
 
                 elif line_count == 0:
+                    # calculates second angle to turn
                     angle = 180-getAngle(new_point, prev_point, Point(0,0), prev_point)
                     
                     # check if angle is negative
@@ -259,48 +269,51 @@ def main():
                             legal_line = False
 
                 if legal_line:
+                    # if all checks are passed
                     if line_count != -1:
-
+                        # draws line to visualize path
                         pygame.draw.aaline(DISPLAY, BLUE, (prev_point.x, prev_point.y), (new_point.x, new_point.y))
 
                         if line_count >= 1:
                             angle = 180-angle
+                            # calculates turn direction, while getting data to draw circle(representing turning arc)
                             centCoord, left_turn, len_to_sub = calcCenterPoint(new_point, RADIUS_IN_PIXELS, coords)
 
-                            # determine whether robot should turn left or right
+                            # adjust angle depending on turn direction
                             if left_turn:
                                 angle = -angle
 
                             # subtract len_to_sub from overall length
                             length -= (len_to_sub + prev_len_to_sub)
 
+                            # subtracts length from previous instruction to accomodate new arc
                             if line_count == 1 and not instructs[len(instructs) - 1].if_ang:
                                 instructs[len(instructs) - 1].val -= len_to_sub
                             
                             prev_len_to_sub = len_to_sub
 
+                            # draw circle representing robot turning arc
                             rect = Rect(centCoord.x-RADIUS_IN_PIXELS, centCoord.y-RADIUS_IN_PIXELS, RADIUS_IN_PIXELS*2, RADIUS_IN_PIXELS*2)
                             pygame.draw.arc(DISPLAY,BLUE,rect,0,2*math.pi, 1)
 
+                        # update display
                         pygame.display.flip()
+                    # add new coordinate to point list
                     coords.append(new_point)
                     prev_point = new_point
+                    # add new instruction to point list
                     instructs.append(Instr(True,angle))
 
                     if length > 0:
                         instructs.append(Instr(False, length))
 
                     line_count += 1
-               
+                    
+        #  update display
         pygame.display.flip()
 
 main()
 
-# TODO
-#   angle cant be too sharp
-#   radi - http://www.pygame.org/docs/ref/draw.html#pygame.draw.arc
-#   somehow set scale
-# 
 # Resources:
 # http://www.pygame.org/docs/ref/draw.html#pygame.draw.line
 # https://www.geeksforgeeks.org/with-statement-in-python/
