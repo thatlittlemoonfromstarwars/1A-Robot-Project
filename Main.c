@@ -1,11 +1,20 @@
 /*
-Domino layer path follower
+Waterloo Engineering Expeller of Dominos Main Program
+
 Sean Aitken, Henrique Engelke, Josh Morcombe, and Andor Siegers
 
-v1.5
+v1.7
 
 Assumptions:
 - more than 3 instructions will be in instruction file
+- no more than 100 instructions will be given to the robot
+- robot is fully loaded at program start, with exactly 30 dominoes
+  in the hopper
+- door is closed, dispenser arm is all the way back at program start
+- if user is selecting line follow mode, it must be placed on a line of adequate length
+  with white on either side
+- if user is selecting file follow mode, a file of the correct format must be
+  loaded on the robot
 
 Motor Ports:
 A - left drive wheel
@@ -18,7 +27,6 @@ Sensor Ports:
 2 - gyro
 3 - touch
 4 - ultrasonic
-
 */
 
 #include "PC_FileIO.c";
@@ -123,6 +131,9 @@ void configureAllSensors(bool mode)
 	wait1Msec(50);
 	SensorMode[GYRO_PORT] = modeEV3Gyro_RateAndAngle;
 	wait1Msec(50);
+
+	// if line follow mode is selected, configure sensors required for
+	// this mode
 	if(!mode)
 	{
 		SensorType[MULTIPLEXER_PORT] = sensorEV3_GenericI2C;
@@ -164,6 +175,7 @@ void endProgram()
 {
 	setDriveTrainSpeed(0);
 	time1[T1] = 0;
+	// wait for user to press touch sensor
 	while(time1[T1] < TIME_TO_PRESS*1000)
 	{
 		if(SensorValue[TOUCH_PORT])
@@ -231,8 +243,6 @@ void followLine(bool &drop_index, int &domino_count) // Sean
 
 void followPathFromFile(bool &drop_index, int &domino_count) // Andor
 {
-	// TODO add break conditions to this function
-	// DO NOT DROP DOMINOES FOR FIRST INSTRUCTION
 	Instr all_instr[MAX_INSTR];
 	float dist_since_last_dom = 0;
 
@@ -277,6 +287,7 @@ void followPathFromFile(bool &drop_index, int &domino_count) // Andor
 
 int getInstrFromFile(Instr* all_instr) // Andor
 {
+	// open file and initialize variables
 	TFileHandle fin;
 	bool fileOkay = openReadPC(fin,"instr.txt");
 
@@ -289,6 +300,7 @@ int getInstrFromFile(Instr* all_instr) // Andor
 
 	for(int read_index = 0; read_index < num_instr; read_index++)
 	{
+		// read in instruction
 		readIntPC(fin, temp_is_ang_int);
 		if(temp_is_ang_int == 0)
 		{
@@ -312,11 +324,15 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 {
 	setDriveTrainSpeed(0);
 	closeDoor();
+
+	// moves dispenser arm to next position, depending on current
+	// position
 	if (!drop_index)
 	{
 		motor[DISPENSER_MOT_PORT] = DISPENSER_SPEED;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) > DISPENSER_POS1)
 		{
+			// scan for touch press
 			if(SensorValue[TOUCH_PORT])
 			{
 				motor[DISPENSER_MOT_PORT] = 0;
@@ -343,6 +359,7 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 		drop_index = false;
 		wait1Msec(100);
 
+		// reset arm to initial position
 		motor[DISPENSER_MOT_PORT] = -DISPENSER_SPEED;
 		while (nMotorEncoder(DISPENSER_MOT_PORT) < DISPENSER_POS0)
 		{
@@ -356,19 +373,17 @@ void dropDomino(bool &drop_index, int &domino_count) // Henrique
 	}
 	openDoor();
 	domino_count--;
-	// continue line or path follow after
 }
 
 void somethingInTheWay (int motor_power) // Josh
 {
-	// takes UltraSonic sensor port, max distance from an object and motor power.
-	// Stops motors, displays message and plays a sound. continues when object is moved.
+	// Stops motors, displays message and plays a sound. Exits when object is moved.
 	while(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
 	{
 		setDriveTrainSpeed(0);
 		eraseDisplay();
 		displayString(5, "Please clear path ahead");
-		playSound(soundBeepBeep); // can change later
+		playSound(soundBeepBeep);
 	}
 	ev3StopSound();
 	setDriveTrainSpeed(motor_power);
@@ -376,14 +391,14 @@ void somethingInTheWay (int motor_power) // Josh
 
 void somethingInTheWay (int left_mot_pow, int right_mot_pow)
 {
-	// takes UltraSonic sensor port, max distance from an object and motor power.
-	// Stops motors, displays message and plays a sound. continues when object is moved.
+	// same as apove, just with 2 motor inputs to accomodate the 
+	// use of this function in turns
 	while(SensorValue[ULTRASONIC_PORT] < DIST_IN_FRONT_LIM)
 	{
 		setDriveTrainSpeed(0);
 		eraseDisplay();
 		displayString(5, "Please clear path ahead");
-		playSound(soundBeepBeep); // can change later
+		playSound(soundBeepBeep);
 	}
 	ev3StopSound();
 	motor[LEFT_MOT_PORT] = left_mot_pow;
@@ -393,28 +408,33 @@ void somethingInTheWay (int left_mot_pow, int right_mot_pow)
 // ********************************** calculation functions ***********************************************
 int distToDeg(float dist)
 {
+	// takes a distance and converts it to motor encoder clicks
+	// using wheel radius
 	return dist*180/PI/WHEEL_RAD;
 }
 
 float degToDist(int deg)
 {
+	// converts degrees to motor encoder clicks using wheel radius
 	return deg*PI*WHEEL_RAD/180;
 }
 
 float average(int value1, int value2)
 {
+	// returns average of two fucntions
 	return (abs(value1 + value2)/2.0);
 }
 
 // ********************************** movement functions ***************************************************
 void setDriveTrainSpeed(int speed)
 {
+	// accomodates the backwards mounting of drive motors
 	motor[LEFT_MOT_PORT] = motor[RIGHT_MOT_PORT] = -1*speed;
 }
 
 void driveDist(float dist, int mot_pow)
 {
-	// input negative motor power for backwards
+	// drives specified distance without dropping dominoes
 	setDriveTrainSpeed(mot_pow);
 	nMotorEncoder[LEFT_MOT_PORT] = 0;
 	while(abs(nMotorEncoder[LEFT_MOT_PORT]) < distToDeg(dist))
@@ -434,6 +454,7 @@ void driveDist(float dist, int mot_pow)
 
 void driveWhileDropping(float dist, int mot_pow, bool &drop_index, int &domino_count, float &dist_since_last_dom)
 {
+	// drives specified distance while dropping dominos at consistent intervals
 	setDriveTrainSpeed(mot_pow);
 	nMotorEncoder[LEFT_MOT_PORT] = 0;
 	nMotorEncoder[RIGHT_MOT_PORT] = 0;
@@ -458,6 +479,7 @@ void driveWhileDropping(float dist, int mot_pow, bool &drop_index, int &domino_c
 			setDriveTrainSpeed(mot_pow);
 		}
 	}
+	// allows for a smooth transition in the domino path between driving linearly and turning
 	dist_since_last_dom = degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT)));
 }
 
@@ -506,8 +528,10 @@ void turnInPlace(int angle, int mot_pow)
 
 void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count, float &dist_since_last_dom)
 {
+	// some concepts taken from:
 	// https://math.stackexchange.com/questions/4310012/calculate-the-turning-radius-turning-circle-of-a-two-wheeled-car
 
+	// turns the robot through a specific radius while dropping dominoes
 	float const TURN_RATIO = (TURN_RAD-13.5)/TURN_RAD;
 	int initialGyro = getGyroDegrees(GYRO_PORT);
 	if(angle > 0)
@@ -530,6 +554,7 @@ void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count
 
 			if(degToDist(abs(nMotorEncoder(LEFT_MOT_PORT))) + dist_since_last_dom >= DIST_BET_DOM_TURNING)
 			{
+				// drops domino if correct spacing is reached
 				dist_since_last_dom = 0;
 				nMotorEncoder(LEFT_MOT_PORT) = 0;
 				dropDomino(drop_index, domino_count);
@@ -558,6 +583,7 @@ void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count
 			}
 			if(degToDist(abs(nMotorEncoder(RIGHT_MOT_PORT))) + dist_since_last_dom >= DIST_BET_DOM_TURNING)
 			{
+				// drops domino if correct spacing is reached
 				dist_since_last_dom = 0;
 				nMotorEncoder(RIGHT_MOT_PORT) = 0;
 				dropDomino(drop_index, domino_count);
@@ -571,8 +597,7 @@ void turnWhileDropping(int angle, int speed, bool &drop_index, int &domino_count
 
 void stopAndKnock() // Josh
 {
-	// moves backwards to knock over first domino
-
+	// moves backwards, knocking over first domino
 	nMotorEncoder(LEFT_MOT_PORT) = 0;
 	setDriveTrainSpeed(KNOCK_SPEED);
 	while(nMotorEncoder(LEFT_MOT_PORT) < distToDeg(DIST_BETWEEN_DOMINOS-0.5))
