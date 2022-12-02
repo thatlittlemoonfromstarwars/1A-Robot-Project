@@ -119,7 +119,7 @@ task main()
 	}
 }
 
-//  ********************************** one-time functions *********************************************
+//  ********************************** one-time functions *************************
 void configureAllSensors(bool mode)
 {
 	SensorType[TOUCH_PORT] = sensorEV3_Touch;
@@ -184,7 +184,7 @@ void endProgram()
 	stopAllTasks();
 }
 
-// ********************************** high level functions ************************************************
+// ********************************** high level functions *************************
 void followLine(bool &drop_index, int &domino_count) // Sean
 {
 	time1[T2] = 0;
@@ -405,7 +405,7 @@ void somethingInTheWay (int left_mot_pow, int right_mot_pow)
 	motor[RIGHT_MOT_PORT] = right_mot_pow;
 }
 
-// ********************************** calculation functions ***********************************************
+// ********************************** calculation functions *************************
 int distToDeg(float dist)
 {
 	// takes a distance and converts it to motor encoder clicks
@@ -425,7 +425,7 @@ float average(int value1, int value2)
 	return (abs(value1 + value2)/2.0);
 }
 
-// ********************************** movement functions ***************************************************
+// ********************************** movement functions *************************
 void setDriveTrainSpeed(int speed)
 {
 	// accomodates the backwards mounting of drive motors
